@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+    <!-- 背景圆角矩形 -->
+    <rect x="4" y="4" width="120" height="120" rx="16" ry="16"
+          fill="#52c41a" 
+          stroke="white" 
+          stroke-width="2"/>
+    
+    <!-- 文档背景 -->
+    <path d="M30 12 L82 12 L98 28 L98 116 L30 116 Z" 
+          fill="#52c41a" 
+          stroke="white" 
+          stroke-width="4"/>
+    
+    <!-- 文档折角 -->
+    <path d="M82 12 L82 28 L98 28" 
+          fill="none" 
+          stroke="white" 
+          stroke-width="4"/>
+    
+    <!-- 文档内容线条 -->
+    <line x1="40" y1="45" x2="88" y2="45" stroke="white" stroke-width="4"/>
+    <line x1="40" y1="65" x2="88" y2="65" stroke="white" stroke-width="4"/>
+    <line x1="40" y1="85" x2="88" y2="85" stroke="white" stroke-width="4"/>
+
+    <!-- 勾选标记 -->
+    <path d="M85 45 L65 65 L55 55" 
+          fill="none"
+          stroke="white" 
+          stroke-width="6"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+</svg>
