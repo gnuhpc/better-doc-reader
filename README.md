@@ -13,6 +13,11 @@ gnuhpc
 - Visual indicators for page compatibility
 - Clean and modern reading experience
 
+## Screenshots
+Prev vs Enabled
+![Prev](https://github.com/gnuhpc/better-doc-reader/storage/screenshots/prev.png)
+![Enabled](https://github.com/gnuhpc/better-doc-reader/storage/screenshots/enabled.png)
+
 ## Installation Method 1: From Chrome Web Store
 
 1. Visit the Chrome Web Store
