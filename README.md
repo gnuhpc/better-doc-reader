@@ -15,8 +15,8 @@ gnuhpc
 
 ## Screenshots
 Prev vs Enabled
-![Prev](https://github.com/gnuhpc/better-doc-reader/storage/screenshots/prev.png)
-![Enabled](https://github.com/gnuhpc/better-doc-reader/storage/screenshots/enabled.png)
+![Prev](https://github.com/gnuhpc/better-doc-reader/storage/screenshots/prev.jpg)
+![Enabled](https://github.com/gnuhpc/better-doc-reader/storage/screenshots/enabled.jpg)
 
 ## Installation Method 1: From Chrome Web Store
 
