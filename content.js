@@ -37,18 +37,42 @@
                 // 创建新的内容容器
                 const container = document.createElement('div');
                 container.style.cssText = `
-                    max-width: 1200px;
+                    width: 96vw;
                     margin: 0 auto;
-                    padding: 20px;
+                    padding: 20px 2vw;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                     line-height: 1.6;
                     color: #333;
                 `;
-                container.appendChild(content.cloneNode(true));
+
+                // 克隆内容并应用新样式
+                const clonedContent = content.cloneNode(true);
+                clonedContent.style.cssText = `
+                    width: 100% !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                `;
+
+                // 确保内容中的所有表格和图片都能适应宽度
+                const tables = clonedContent.getElementsByTagName('table');
+                for (let table of tables) {
+                    table.style.width = '100%';
+                    table.style.maxWidth = 'none';
+                }
+
+                const images = clonedContent.getElementsByTagName('img');
+                for (let img of images) {
+                    img.style.maxWidth = '100%';
+                    img.style.height = 'auto';
+                }
+
+                // 添加内容到容器
+                container.appendChild(clonedContent);
                 
                 // 清空并重设页面
                 document.body.innerHTML = '';
-                document.body.style.cssText = 'background-color: #fff; margin: 0; padding: 0;';
+                document.body.style.cssText = 'background-color: #fff; margin: 0; padding: 0; width: 100vw; max-width: 100vw; overflow-x: hidden;';
                 document.body.appendChild(container);
                 
                 window.__betterAliyunDoc.isContentOnly = true;
