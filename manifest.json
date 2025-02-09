@@ -5,8 +5,42 @@
   "version": "1.0",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage",
+    "commands"
   ],
+  "commands": {
+    "toggle-view": {
+      "suggested_key": {
+        "default": "Alt+F"
+      },
+      "description": "Toggle between full page and content-only views"
+    },
+    "narrow-content": {
+      "suggested_key": {
+        "default": "Alt+Left"
+      },
+      "description": "Make content area narrower"
+    },
+    "widen-content": {
+      "suggested_key": {
+        "default": "Alt+Right"
+      },
+      "description": "Make content area wider"
+    },
+    "toggle-dark-mode": {
+      "suggested_key": {
+        "default": "Alt+D"
+      },
+      "description": "Toggle dark mode"
+    },
+    "collapse-left-sidebar": {
+      "description": "Collapse the left sidebar"
+    },
+    "collapse-right-sidebar": {
+      "description": "Collapse the right sidebar"
+    }
+  },
   "action": {
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -24,5 +58,18 @@
   },
   "author": "gnuhpc",
   "homepage_url": "https://github.com/gnuhpc/better-doc-reader",
-  "privacy_policy": "https://github.com/gnuhpc/better-doc-reader/blob/main/privacy_policy.md"
+  "privacy_policy": "https://github.com/gnuhpc/better-doc-reader/blob/main/privacy_policy.md",
+  "content_scripts": [
+    {
+      "matches": ["*://*.aliyun.com/*"],
+      "js": [
+        "src/modules/init.js",
+        "src/modules/layout.js",
+        "src/modules/contentToggle.js",
+        "src/modules/keyboardHandler.js",
+        "src/modules/darkMode.js",
+        "content.js"
+      ]
+    }
+  ]
 }

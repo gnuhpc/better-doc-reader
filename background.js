@@ -2,6 +2,65 @@
 const injectedTabs = new Set();
 const extractablePages = new Set();
 
+// 监听命令
+chrome.commands.onCommand.addListener((command) => {
+    console.log('[BetterAliyunDoc] Command received:', command);
+    
+    // 向当前标签页发送消息
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+            console.log('[BetterAliyunDoc] Sending message to tab:', tabs[0].id, 'with command:', command);
+            chrome.tabs.sendMessage(tabs[0].id, { command: command }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error('[BetterAliyunDoc] Error:', chrome.runtime.lastError);
+                } else {
+                    console.log('[BetterAliyunDoc] Response:', response);
+                }
+            });
+        }
+    });
+});
+
+// 处理键盘快捷键
+chrome.commands.onCommand.addListener(async (command) => {
+    console.log('Command received:', command);  // 添加日志
+    if (command === 'toggle-view') {
+        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+        if (tab) {
+            handleToggle(tab);
+        }
+    }
+});
+
+// 处理点击和快捷键的共同逻辑
+async function handleToggle(tab) {
+    try {
+        console.log('Handle toggle for tab:', tab.id);  // 添加日志
+        // 检查是否已经注入过
+        if (!injectedTabs.has(tab.id)) {
+            // 首次注入内容脚本
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ['content.js']
+            });
+            injectedTabs.add(tab.id);
+        }
+
+        // 发送消息到内容脚本
+        try {
+            const response = await chrome.tabs.sendMessage(tab.id, {action: 'toggleContent'});
+            console.log('Toggle response:', response);
+        } catch (error) {
+            console.error('Error sending message to content script:', error);
+            // 如果发送消息失败，可能是content script没有正确加载，尝试重新注入
+            injectedTabs.delete(tab.id);
+            await handleToggle(tab);
+        }
+    } catch (error) {
+        console.error('Error in handleToggle:', error);
+    }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'pageCheckResult') {
         if (message.isExtractable) {
@@ -41,34 +100,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-chrome.action.onClicked.addListener(async (tab) => {
-    try {
-        // 检查是否已经注入过
-        if (!injectedTabs.has(tab.id)) {
-            // 首次注入内容脚本
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ['content.js']
-            });
-            injectedTabs.add(tab.id);
-        }
-        
-        // 发送消息到内容脚本
-        const response = await chrome.tabs.sendMessage(tab.id, {action: 'toggleContent'});
-        console.log('Toggle response:', response);
-    } catch (error) {
-        console.error('Error:', error);
-    }
-});
+// 处理图标点击
+chrome.action.onClicked.addListener(handleToggle);
 
 // 当标签页更新时，重新检查页面
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url?.includes('aliyun.com')) {
-        chrome.scripting.executeScript({
-            target: { tabId },
-            files: ['content.js']
-        });
-        injectedTabs.add(tabId);
+    if (changeInfo.status === 'complete') {
+        // 移除注入状态
+        injectedTabs.delete(tabId);
+        extractablePages.delete(tabId);
     }
 });
 
