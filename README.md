@@ -11,6 +11,10 @@ gnuhpc
 ### Features
 - Enhanced reading experience for technical documentation.
 - Switch between full page and content-only views.
+- Quick note-taking functionality:
+  - Select text to save important notes
+  - Access saved notes through the extension popup
+  - Notes automatically sync across Chrome browsers (when signed in)
 - Keyboard shortcuts for quick navigation:
   - Toggle View: Alt + F
   - Narrow Content: Alt + Left
@@ -26,6 +30,10 @@ gnuhpc
 ### 特性
 - 提供技术文档的增强阅读体验。
 - 切换全页面和仅内容视图。
+- 快捷笔记功能：
+  - 选择文本保存重要笔记
+  - 通过扩展弹窗访问保存的笔记
+  - 笔记自动在Chrome浏览器间同步（需登录Chrome账号）
 - 快捷键快速导航：
   - 切换视图：Alt + F
   - 缩小内容：Alt + Left
@@ -35,10 +43,6 @@ gnuhpc
   - 收起右侧边栏：Alt + R
 - 深色模式支持，便于在低光环境下阅读。
 - 自动检测兼容页面。
-
-## Screenshots
-Prev vs Enabled
-
 
 
 ## Installation Method 1: From Chrome Web Store
