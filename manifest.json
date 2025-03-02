@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Better Doc Reader",
-  "description": "Enhanced reading experience for technical documentation. Switch between full page and content-only views.",
-  "version": "1.0",
+  "description": "A tool for enhancing technical documentation.",
+  "version": "1.7",
   "permissions": [
     "activeTab",
-    "scripting",
+    "commands",
     "storage",
-    "commands"
+    "tabs"
   ],
   "commands": {
     "toggle-view": {
@@ -46,7 +46,8 @@
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
-    }
+    },
+    "default_popup": "popup.html"
   },
   "icons": {
     "16": "icons/icon-16.png",
@@ -59,17 +60,26 @@
   "author": "gnuhpc",
   "homepage_url": "https://github.com/gnuhpc/better-doc-reader",
   "privacy_policy": "https://github.com/gnuhpc/better-doc-reader/blob/main/privacy_policy.md",
+  "web_accessible_resources": [{
+    "resources": [
+      "src/modules/*.js"
+    ],
+    "matches": ["*://*.aliyun.com/*"]
+  }],
   "content_scripts": [
     {
       "matches": ["*://*.aliyun.com/*"],
       "js": [
         "src/modules/init.js",
-        "src/modules/layout.js",
-        "src/modules/contentToggle.js",
-        "src/modules/keyboardHandler.js",
         "src/modules/darkMode.js",
+        "src/modules/layout.js",
+        "src/modules/keyboardHandler.js",
+        "src/modules/contentToggle.js",
+        "src/modules/notes.js",
         "content.js"
-      ]
+      ],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ]
 }

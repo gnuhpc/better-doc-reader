@@ -1,0 +1,13 @@
+{
+  "name": "better-aliyun-doc",
+  "version": "1.5.0",
+  "description": "A browser extension to improve Aliyun documentation",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  }
+}

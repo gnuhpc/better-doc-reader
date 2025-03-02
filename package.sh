@@ -5,7 +5,7 @@ temp_dir=$(mktemp -d)
 echo "Created temporary directory: $temp_dir"
 
 # 复制必要文件
-cp -r manifest.json background.js content.js icons "$temp_dir/"
+cp -r manifest.json background.js content.js popup.html popup.js icons src "$temp_dir/"
 cp README.md privacy_policy.md "$temp_dir/"
 
 # 进入临时目录

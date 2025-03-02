@@ -1,379 +1,427 @@
+// 初始化全局对象
+if (!window.__betterAliyunDoc) {
+  window.__betterAliyunDoc = {
+    contentWidth: null, // 将由 init.js 初始化
+    isWideContent: false,
+    isLayoutAdjustmentInProgress: false // 标记是否由扩展程序主动触发的布局调整
+  };
+}
+
 // 布局相关的常量
 const LAYOUT_CONSTANTS = {
-    MIN_WIDTH: 20,    // 最小宽度 20%
-    MAX_WIDTH: 100,   // 最大宽度 100%
-    STEP: 10,         // 每次调整 10%
-    SIDEBAR_WIDTH: 240 // 侧边栏宽度
+  MIN_WIDTH: 20,    // 最小宽度 20%
+  MAX_WIDTH: 100,   // 最大宽度 100%
+  STEP: 3,         // 每次调整 10%
+  SIDEBAR_WIDTH: 240 // 侧边栏宽度
 };
+
+// 添加窗口大小变化事件监听
+window.addEventListener('resize', () => {
+  if (window.__betterAliyunDoc.contentWidth !== null) {
+    console.log('[BetterAliyunDoc] Window resized, resetting content width');
+    // 在用户手动调整窗口大小时重置内容区域宽度
+    location.reload();
+  }
+});
 
 // 处理正文区域宽度调整
 function adjustSidebars(mode) {
-    console.log('[BetterAliyunDoc] Adjusting content width, mode:', mode);
-    
-    // 获取所有相关元素
-    const content = document.querySelector('.aliyun-docs-content');
-    const leftSidebar = document.querySelector('.Menu--helpMenuBox--rvBkNtL');
-    const rightSidebar = document.querySelector('.aliyun-docs-side');
-    const container = content.parentElement;
-    
-    console.log('[BetterAliyunDoc] Found elements:', {
-        content: !!content,
-        leftSidebar: !!leftSidebar,
-        rightSidebar: !!rightSidebar,
-        container: !!container
-    });
+  const content = document.querySelector('.aliyun-docs-content');
+  const leftSidebar = document.querySelector('.aliyun-docs-menu');
+  const rightSidebar = document.querySelector('.aliyun-docs-side');
 
-    if (!content || !container) {
-        console.log('[BetterAliyunDoc] Required elements not found, aborting');
-        return;
+  if (!content || !leftSidebar || !rightSidebar) return;
+
+  // 标记当前操作是由扩展程序触发
+  window.__betterAliyunDoc.isLayoutAdjustmentInProgress = true;
+
+  let newWidth;
+  if (mode === 'wide') {
+    newWidth = Math.min(window.__betterAliyunDoc.contentWidth + LAYOUT_CONSTANTS.STEP, LAYOUT_CONSTANTS.MAX_WIDTH);
+    // 如果已经是最大宽度，直接返回避免不必要的宽度变化
+    if (window.__betterAliyunDoc.contentWidth >= LAYOUT_CONSTANTS.MAX_WIDTH) {
+      return;
+    }
+  } else if (mode === 'narrow') {
+    newWidth = Math.max(window.__betterAliyunDoc.contentWidth - LAYOUT_CONSTANTS.STEP, LAYOUT_CONSTANTS.MIN_WIDTH);
+  }
+
+  console.log('[BetterAliyunDoc] Old content width:', window.__betterAliyunDoc.contentWidth + '%');
+  console.log('[BetterAliyunDoc] New content width:', newWidth + '%');
+
+  // 保存新的宽度状态
+  window.__betterAliyunDoc.contentWidth = newWidth;
+  window.__betterAliyunDoc.isWideContent = newWidth >= LAYOUT_CONSTANTS.MAX_WIDTH;
+
+  // 保证元素宽度调整和过渡效果的顺序
+  applyTransitionEffects([content, leftSidebar, rightSidebar]);
+  adjustElementWidths(newWidth, { content, leftSidebar, rightSidebar });
+
+  // 在宽度调整后再设置内容区域宽度
+  window.requestAnimationFrame(() => {
+    content.style.width = `${newWidth}%`;
+    // Hide sidebars if content is at maximum width
+    if (newWidth >= LAYOUT_CONSTANTS.MAX_WIDTH) {
+      leftSidebar.style.display = 'none';
+      rightSidebar.style.display = 'none';
+    } else {
+      leftSidebar.style.display = '';
+      rightSidebar.style.display = '';
     }
 
-    // 定义宽度范围和步进值
-    const MIN_WIDTH = 20;  // 最小宽度 20%
-    const MAX_WIDTH = 100; // 最大宽度 100%
-    const STEP = 10;       // 每次调整 10%
-    const SIDEBAR_WIDTH = 240; // 侧边栏宽度
-
-    // 获取当前宽度
-    let currentWidth = window.__betterAliyunDoc.contentWidth;
-    console.log('[BetterAliyunDoc] Current width:', currentWidth);
-    console.log('[BetterAliyunDoc] Current width before adjustment:', currentWidth);
-
-    // 确保 currentWidth 是有效的
-    if (isNaN(currentWidth) || currentWidth < 0) {
-        console.warn('[BetterAliyunDoc] Invalid currentWidth, setting to default value of 70');
-        currentWidth = 70; // 默认值
-    }
-
-    // 应用过渡效果和宽度
-    const adjustWidth = (width) => {
-        // 确保宽度在有效范围内
-        width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, width));
-        
-        // 设置容器样式
-        container.style.setProperty('display', 'flex', 'important');
-        container.style.setProperty('justify-content', 'center', 'important');
-        container.style.setProperty('align-items', 'flex-start', 'important');
-        container.style.setProperty('width', '100%', 'important');
-        container.style.setProperty('position', 'relative', 'important');
-        container.style.setProperty('overflow', 'hidden', 'important');
-        
-        // 为所有元素添加过渡效果
-        const elements = [content, leftSidebar, rightSidebar].filter(el => el);
-        elements.forEach(el => {
-            el.style.transition = 'all 0.3s ease';
-        });
-
-        // 计算宽度
-        const widthPx = (window.innerWidth * width) / 100;
-        const widthStr = `${width}%`;
-        
-        // 调整所有元素的基础样式
-        if (leftSidebar) {
-            leftSidebar.style.setProperty('position', 'relative', 'important');
-            leftSidebar.style.setProperty('flex', `0 0 ${SIDEBAR_WIDTH}px`, 'important');
-        }
-        
-        content.style.setProperty('position', 'relative', 'important');
-        content.style.setProperty('flex', `0 1 ${widthStr}`, 'important');
-        content.style.setProperty('min-width', '0', 'important'); // 允许内容区域收缩
-        content.style.setProperty('margin', '0', 'important');
-        
-        if (rightSidebar) {
-            rightSidebar.style.setProperty('position', 'relative', 'important');
-            rightSidebar.style.setProperty('flex', `0 0 ${SIDEBAR_WIDTH}px`, 'important');
-        }
-        
-        // 根据内容宽度调整侧边栏
-        if (width >= 90) {
-            // 内容区域很宽时，完全隐藏两侧边栏
-            if (leftSidebar) {
-                leftSidebar.style.setProperty('margin-left', `-${SIDEBAR_WIDTH}px`, 'important');
-                leftSidebar.style.setProperty('opacity', '0', 'important');
-                leftSidebar.style.setProperty('pointer-events', 'none', 'important');
-            }
-            if (rightSidebar) {
-                rightSidebar.style.setProperty('margin-right', `-${SIDEBAR_WIDTH}px`, 'important');
-                rightSidebar.style.setProperty('opacity', '0', 'important');
-                rightSidebar.style.setProperty('pointer-events', 'none', 'important');
-            }
-        } else if (width >= 70) {
-            // 内容区域较宽时，部分隐藏两侧边栏
-            const overlap = Math.max(0, (widthPx + 2 * SIDEBAR_WIDTH - window.innerWidth) / 2);
-            if (leftSidebar) {
-                leftSidebar.style.setProperty('margin-left', `-${overlap}px`, 'important');
-                leftSidebar.style.setProperty('opacity', '0.5', 'important');
-                leftSidebar.style.setProperty('pointer-events', 'none', 'important');
-            }
-            if (rightSidebar) {
-                rightSidebar.style.setProperty('margin-right', `-${overlap}px`, 'important');
-                rightSidebar.style.setProperty('opacity', '0.5', 'important');
-                rightSidebar.style.setProperty('pointer-events', 'none', 'important');
-            }
-        } else {
-            // 内容区域较窄时，完全显示两侧边栏
-            if (leftSidebar) {
-                leftSidebar.style.setProperty('margin-left', '0', 'important');
-                leftSidebar.style.setProperty('opacity', '1', 'important');
-                leftSidebar.style.setProperty('pointer-events', 'auto', 'important');
-            }
-            if (rightSidebar) {
-                rightSidebar.style.setProperty('margin-right', '0', 'important');
-                rightSidebar.style.setProperty('opacity', '1', 'important');
-                rightSidebar.style.setProperty('pointer-events', 'auto', 'important');
-            }
-        }
-        
-        console.log('[BetterAliyunDoc] Adjusted content width to:', widthStr);
-        
-        // 保存当前状态
-        window.__betterAliyunDoc.contentWidth = width;
-    };
-
-    // 根据模式调整宽度
-    let newWidth;
-    if (mode === 'narrow') {
-        // 向左收窄
-        newWidth = currentWidth - STEP;
-        console.log('[BetterAliyunDoc] Narrowing from', currentWidth, 'to', newWidth);
-    } else if (mode === 'wide') {
-        // 向右扩展
-        newWidth = currentWidth + STEP;
-        console.log('[BetterAliyunDoc] Widening from', currentWidth, 'to', newWidth);
-    }
-
-    // 应用新宽度
-    adjustWidth(newWidth);
-    console.log('[BetterAliyunDoc] Adjusting content width to:', newWidth);
-}
-
-// 获取布局相关的DOM元素
-function getLayoutElements() {
-    return {
-        content: document.querySelector('.aliyun-docs-content'),
-        leftSidebar: document.querySelector('.Menu--helpMenuBox--rvBkNtL'),
-        rightSidebar: document.querySelector('.aliyun-docs-side'),
-        container: document.querySelector('.aliyun-docs-content')?.parentElement
-    };
-}
-
-// 计算新的宽度
-function calculateNewWidth(currentWidth, mode) {
-    if (mode === 'narrow') {
-        return Math.max(LAYOUT_CONSTANTS.MIN_WIDTH, currentWidth - LAYOUT_CONSTANTS.STEP);
-    } else if (mode === 'wide') {
-        return Math.min(LAYOUT_CONSTANTS.MAX_WIDTH, currentWidth + LAYOUT_CONSTANTS.STEP);
-    }
-    return currentWidth;
-}
-
-// 应用宽度调整
-function adjustWidth(width, elements) {
-    const { content, leftSidebar, rightSidebar, container } = elements;
-    width = Math.max(LAYOUT_CONSTANTS.MIN_WIDTH, Math.min(LAYOUT_CONSTANTS.MAX_WIDTH, width));
-
-    applyContainerStyles(container);
-    applyTransitionEffects([content, leftSidebar, rightSidebar]);
-    adjustElementWidths(width, elements);
-
-    window.__betterAliyunDoc.contentWidth = width;
-    console.log('[BetterAliyunDoc] Adjusted content width to:', `${width}%`);
+    // 重置标记
+    window.__betterAliyunDoc.isLayoutAdjustmentInProgress = false;
+  });
 }
 
 // 应用容器样式
 function applyContainerStyles(container) {
-    const styles = {
-        'display': 'flex',
-        'justify-content': 'center',
-        'align-items': 'flex-start',
-        'width': '100%',
-        'position': 'relative',
-        'overflow': 'hidden'
-    };
+  const styles = {
+    'display': 'flex',
+    'justify-content': 'space-between',
+    'align-items': 'flex-start',
+    'width': '100%',
+    'position': 'relative',
+    'overflow': 'visible',
+    'gap': '0',
+    'padding': '0'
+  };
 
-    Object.entries(styles).forEach(([prop, value]) => {
-        container.style.setProperty(prop, value, 'important');
-    });
+  Object.entries(styles).forEach(([prop, value]) => {
+    container.style.setProperty(prop, value, 'important');
+  });
 }
 
 // 应用过渡效果
 function applyTransitionEffects(elements) {
-    elements.filter(Boolean).forEach(el => {
-        el.style.transition = 'all 0.3s ease';
-    });
+  elements.filter(Boolean).forEach((el) => {
+    el.style.transition = 'all 0.1s ease';
+  });
 }
 
 // 调整元素宽度
 function adjustElementWidths(width, elements) {
-    const { content, leftSidebar, rightSidebar } = elements;
-    const widthPx = (window.innerWidth * width) / 100;
+  const { content, leftSidebar, rightSidebar } = elements;
+  const widthPx = (window.innerWidth * width) / 100;
 
-    applySidebarStyles(leftSidebar, rightSidebar, width, widthPx);
-    applyContentStyles(content, width);
+  applySidebarStyles(leftSidebar, rightSidebar, width, widthPx);
+  applyContentStyles(content, width);
 }
 
 // 应用侧边栏样式
 function applySidebarStyles(leftSidebar, rightSidebar, width, widthPx) {
-    const sidebarStyles = getSidebarStyles(width, widthPx);
-    
-    if (leftSidebar) {
-        Object.entries(sidebarStyles.left).forEach(([prop, value]) => {
-            leftSidebar.style.setProperty(prop, value, 'important');
-        });
-    }
-    
-    if (rightSidebar) {
-        Object.entries(sidebarStyles.right).forEach(([prop, value]) => {
-            rightSidebar.style.setProperty(prop, value, 'important');
-        });
-    }
+  const sidebarStyles = getSidebarStyles(width, widthPx);
+
+  if (leftSidebar) {
+    Object.entries(sidebarStyles.left).forEach(([prop, value]) => {
+      leftSidebar.style.setProperty(prop, value, 'important');
+    });
+  }
+
+  if (rightSidebar) {
+    Object.entries(sidebarStyles.right).forEach(([prop, value]) => {
+      rightSidebar.style.setProperty(prop, value, 'important');
+    });
+  }
 }
 
 // 获取侧边栏样式配置
 function getSidebarStyles(width, widthPx) {
-    const baseStyles = {
-        position: 'relative',
-        flex: `0 0 ${LAYOUT_CONSTANTS.SIDEBAR_WIDTH}px`
-    };
+  const baseStyles = {
+    position: 'relative',
+    flex: `0 0 ${LAYOUT_CONSTANTS.SIDEBAR_WIDTH}px`
+  };
 
-    if (width >= 90) {
-        return getCollapsedSidebarStyles(baseStyles);
-    } else if (width >= 70) {
-        return getPartiallyHiddenSidebarStyles(baseStyles, widthPx);
-    }
-    return getVisibleSidebarStyles(baseStyles);
+  if (width >= 90) {
+    return getCollapsedSidebarStyles(baseStyles);
+  } else if (width >= 70) {
+    return getPartiallyHiddenSidebarStyles(baseStyles, widthPx);
+  }
+  return getVisibleSidebarStyles(baseStyles);
 }
 
 // 获取完全收起的侧边栏样式
 function getCollapsedSidebarStyles(baseStyles) {
-    return {
-        left: {
-            ...baseStyles,
-            'margin-left': `-${LAYOUT_CONSTANTS.SIDEBAR_WIDTH}px`,
-            'opacity': '0',
-            'pointer-events': 'none'
-        },
-        right: {
-            ...baseStyles,
-            'margin-right': `-${LAYOUT_CONSTANTS.SIDEBAR_WIDTH}px`,
-            'opacity': '0',
-            'pointer-events': 'none'
-        }
-    };
+  return {
+    left: {
+      ...baseStyles,
+      'transform': 'translateX(-100%)',
+      'opacity': '0',
+      'pointer-events': 'none',
+      'margin': '0'
+    },
+    right: {
+      ...baseStyles,
+      'transform': 'translateX(100%)',
+      'opacity': '0',
+      'pointer-events': 'none',
+      'margin': '0'
+    }
+  };
 }
 
 // 获取部分隐藏的侧边栏样式
 function getPartiallyHiddenSidebarStyles(baseStyles, widthPx) {
-    const overlap = Math.max(0, (widthPx + 2 * LAYOUT_CONSTANTS.SIDEBAR_WIDTH - window.innerWidth) / 2);
-    return {
-        left: {
-            ...baseStyles,
-            'margin-left': `-${overlap}px`,
-            'opacity': '0.5',
-            'pointer-events': 'none'
-        },
-        right: {
-            ...baseStyles,
-            'margin-right': `-${overlap}px`,
-            'opacity': '0.5',
-            'pointer-events': 'none'
-        }
-    };
+  const overlap = Math.max(0, (widthPx + 2 * LAYOUT_CONSTANTS.SIDEBAR_WIDTH - window.innerWidth) / 2);
+
+  return {
+    left: {
+      ...baseStyles,
+      'transform': overlap > 0 ? `translateX(-${overlap}px)` : 'none',
+      'opacity': '1',
+      'pointer-events': 'auto'
+    },
+    right: {
+      ...baseStyles,
+      'transform': overlap > 0 ? `translateX(${overlap}px)` : 'none',
+      'opacity': '1',
+      'pointer-events': 'auto'
+    }
+  };
 }
 
 // 获取完全可见的侧边栏样式
 function getVisibleSidebarStyles(baseStyles) {
-    return {
-        left: {
-            ...baseStyles,
-            'margin-left': '0',
-            'opacity': '1',
-            'pointer-events': 'auto'
-        },
-        right: {
-            ...baseStyles,
-            'margin-right': '0',
-            'opacity': '1',
-            'pointer-events': 'auto'
-        }
-    };
+  return {
+    left: {
+      ...baseStyles,
+      'margin-left': '0',
+      'opacity': '1',
+      'pointer-events': 'auto'
+    },
+    right: {
+      ...baseStyles,
+      'margin-right': '0',
+      'opacity': '1',
+      'pointer-events': 'auto'
+    }
+  };
 }
 
 // 应用内容区域样式
 function applyContentStyles(content, width) {
-    const contentStyles = {
-        'position': 'relative',
-        'flex': `0 1 ${width}%`,
-        'min-width': '0',
-        'margin': '0'
-    };
+  const contentStyles = {
+    'position': 'relative',
+    'flex': '1 1 auto',
+    'width': 'auto',
+    'min-width': '0',
+    'max-width': `${width}%`,
+    'margin': '0 auto',
+    'transition': 'all 0.1s ease'
+  };
 
-    Object.entries(contentStyles).forEach(([prop, value]) => {
-        content.style.setProperty(prop, value, 'important');
-    });
+  Object.entries(contentStyles).forEach(([prop, value]) => {
+    content.style.setProperty(prop, value, 'important');
+  });
 }
 
 // 收起或显示左侧边栏的函数
 function toggleLeftSidebar() {
-    const leftSidebar = document.querySelector('.Menu--helpMenuBox--rvBkNtL');
-    const content = document.querySelector('.aliyun-docs-content');
-    if (leftSidebar) {
-        if (leftSidebar.style.display === 'none') {
-            leftSidebar.style.display = 'block'; // 显示左侧边栏
-            content.style.marginLeft = '0'; // 恢复时不设置左边距，让内容区域自动贴边
-            content.style.width = 'calc(100% - 240px)'; // 恢复内容区域宽度
-        } else {
-            leftSidebar.style.display = 'none'; // 收起左侧边栏
-            content.style.marginLeft = '0'; // 收起时清除左边距
-            content.style.width = '100%'; // 扩展内容区域宽度
-        }
-    }
+  const leftSidebar = document.querySelector('.Menu--helpMenuBox--rvBkNtL');
+  const content = document.querySelector('.aliyun-docs-content');
+
+  if (!leftSidebar || !content) return;
+
+  // 如果style.display未设置，先获取计算后的display值
+  const currentDisplay = leftSidebar.style.display || window.getComputedStyle(leftSidebar).display;
+  const isHidden = currentDisplay === 'none';
+
+  leftSidebar.style.transition = 'all 0.1s ease';
+  content.style.transition = 'all 0.1s ease';
+
+  if (isHidden) {
+    // 显示左侧边栏
+    leftSidebar.style.display = 'block';
+    leftSidebar.style.opacity = '1';
+    leftSidebar.style.transform = 'translateX(0)';
+    leftSidebar.style.zIndex = '1';
+    content.style.marginLeft = '0';
+    content.style.width = 'calc(100% - 240px)';
+    content.style.zIndex = '2';
+  } else {
+    // 收起左侧边栏
+    leftSidebar.style.opacity = '0';
+    leftSidebar.style.transform = 'translateX(-100%)';
+    window.setTimeout(() => {
+      leftSidebar.style.display = 'none';
+    }, 100); // 等待过渡效果完成后隐藏
+    content.style.marginLeft = '0';
+    content.style.width = '100%';
+  }
 }
 
 // 收起或显示右侧边栏的函数
 function toggleRightSidebar() {
-    const rightSidebar = document.querySelector('.aliyun-docs-side');
-    const content = document.querySelector('.aliyun-docs-content');
-    const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper');
-    
-    if (rightSidebar) {
-        if (rightSidebar.style.display === 'none') {
-            rightSidebar.style.display = 'block'; // 显示右侧边栏
-            content.style.marginRight = '0'; // 恢复时不设置右边距，让内容区域自动贴边
-            content.style.width = 'calc(100% - 240px)'; // 恢复内容区域宽度
-            if (contentWrapper) {
-                contentWrapper.style.width = ''; // 恢复默认宽度
-            }
-        } else {
-            rightSidebar.style.display = 'none'; // 收起右侧边栏
-            content.style.marginRight = '0'; // 收起时清除右边距
-            content.style.width = '100%'; // 扩展内容区域宽度
-            if (contentWrapper) {
-                contentWrapper.style.width = '100%'; // 扩展包装容器宽度
-            }
-        }
+  const rightSidebar = document.querySelector('.aliyun-docs-side');
+  const content = document.querySelector('.aliyun-docs-content');
+  const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper');
+
+  if (!rightSidebar || !content) return;
+
+  // 如果style.display未设置，先获取计算后的display值
+  const currentDisplay = rightSidebar.style.display || window.getComputedStyle(rightSidebar).display;
+  const isHidden = currentDisplay === 'none';
+
+  rightSidebar.style.transition = 'all 0.1s ease';
+  content.style.transition = 'all 0.1s ease';
+  if (contentWrapper) contentWrapper.style.transition = 'all 0.1s ease';
+
+  if (isHidden) {
+    // 显示右侧边栏
+    rightSidebar.style.display = 'block';
+    rightSidebar.style.opacity = '1';
+    rightSidebar.style.transform = 'translateX(0)';
+    rightSidebar.style.zIndex = '1';
+    content.style.marginRight = '0';
+    content.style.width = 'calc(100% - 240px)';
+    content.style.zIndex = '2';
+    if (contentWrapper) {
+      contentWrapper.style.width = '';
+      contentWrapper.style.zIndex = '2';
     }
+  } else {
+    // 收起右侧边栏
+    rightSidebar.style.opacity = '0';
+    rightSidebar.style.transform = 'translateX(100%)';
+    window.setTimeout(() => {
+      rightSidebar.style.display = 'none';
+    }, 100); // 等待过渡效果完成后隐藏
+    content.style.marginRight = '0';
+    content.style.width = '100%';
+    if (contentWrapper) {
+      contentWrapper.style.width = '100%';
+    }
+  }
 }
 
-// 调整布局
-function adjustLayout() {
-    console.log('[BetterAliyunDoc] Adjusting layout');
-    const contentElement = document.querySelector('.aliyun-docs-content');
-    if (!contentElement) return;
+// 状态变量
+const sidebarState = {
+  leftSidebarCollapsed: false,
+  rightSidebarCollapsed: false,
+  originalStyles: {
+    left: null,
+    right: null,
+    content: null,
+    contentWrapper: null
+  }
+};
 
-    // 根据当前状态调整布局
-    if (window.__betterAliyunDoc.isWideContent) {
-        adjustSidebars('wide');
-    } else {
-        adjustSidebars('narrow');
+// 保存元素的原始样式
+function saveOriginalStyles(element) {
+  if (!element) return null;
+  const computedStyle = window.getComputedStyle(element);
+  return {
+    display: computedStyle.display,
+    opacity: computedStyle.opacity,
+    transform: computedStyle.transform,
+    zIndex: computedStyle.zIndex,
+    marginLeft: computedStyle.marginLeft,
+    marginRight: computedStyle.marginRight,
+    width: computedStyle.width,
+    maxWidth: computedStyle.maxWidth
+  };
+}
+
+// 收起或恢复左侧边栏的函数
+function collapseLeftSidebar() {
+  const leftSidebar = document.querySelector('.Menu--helpMenuBox--rvBkNtL');
+  const content = document.querySelector('.aliyun-docs-content');
+  if (!leftSidebar || !content) return;
+
+  leftSidebar.style.transition = 'all 0.1s ease';
+  content.style.transition = 'all 0.1s ease';
+
+  if (!sidebarState.leftSidebarCollapsed) {
+    // 保存原始样式
+    sidebarState.originalStyles.left = saveOriginalStyles(leftSidebar);
+    sidebarState.originalStyles.content = saveOriginalStyles(content);
+    // 收起左侧边栏
+    leftSidebar.style.opacity = '0';
+    leftSidebar.style.transform = 'translateX(-100%)';
+    window.setTimeout(() => {
+      leftSidebar.style.display = 'none';
+    }, 100);
+    content.style.marginLeft = '0';
+    content.style.width = '100%';
+    sidebarState.leftSidebarCollapsed = true;
+  } else {
+    // 恢复左侧边栏
+    leftSidebar.style.display = sidebarState.originalStyles.left.display;
+    Object.entries(sidebarState.originalStyles.left).forEach(([prop, value]) => {
+      if (prop !== 'display') { // 跳过display属性，因为我们已经设置过了
+        leftSidebar.style[prop] = value;
+      }
+    });
+
+    Object.entries(sidebarState.originalStyles.content).forEach(([prop, value]) => {
+      content.style[prop] = value;
+    });
+
+    sidebarState.leftSidebarCollapsed = false;
+  }
+}
+
+// 收起或恢复右侧边栏的函数
+function collapseRightSidebar() {
+  const rightSidebar = document.querySelector('.aliyun-docs-side');
+  const content = document.querySelector('.aliyun-docs-content');
+  const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper');
+  if (!rightSidebar || !content) return;
+
+  rightSidebar.style.transition = 'all 0.1s ease';
+  content.style.transition = 'all 0.1s ease';
+  if (contentWrapper) contentWrapper.style.transition = 'all 0.1s ease';
+
+  if (!sidebarState.rightSidebarCollapsed) {
+    // 保存原始样式
+    sidebarState.originalStyles.right = saveOriginalStyles(rightSidebar);
+    sidebarState.originalStyles.content = saveOriginalStyles(content);
+    if (contentWrapper) {
+      sidebarState.originalStyles.contentWrapper = saveOriginalStyles(contentWrapper);
     }
+    // 收起右侧边栏
+    rightSidebar.style.opacity = '0';
+    rightSidebar.style.transform = 'translateX(100%)';
+    window.setTimeout(() => {
+      rightSidebar.style.display = 'none';
+    }, 100);
+    const mainContentWidth = document.querySelector('.aliyun-docs-content-layout-main')?.offsetWidth || window.innerWidth;
+    content.style.marginRight = '0';
+    content.style.width = `${mainContentWidth}px`;
+    content.style.maxWidth = 'none';
+    if (contentWrapper) {
+      contentWrapper.style.width = `${mainContentWidth}px`;
+      contentWrapper.style.maxWidth = 'none';
+    }
+    sidebarState.rightSidebarCollapsed = true;
+  } else {
+    // 恢复右侧边栏
+    rightSidebar.style.display = sidebarState.originalStyles.right.display;
+    Object.entries(sidebarState.originalStyles.right).forEach(([prop, value]) => {
+      if (prop !== 'display') { // 跳过display属性，因为我们已经设置过了
+        rightSidebar.style[prop] = value;
+      }
+    });
+
+    Object.entries(sidebarState.originalStyles.content).forEach(([prop, value]) => {
+      content.style[prop] = value;
+    });
+
+    if (contentWrapper && sidebarState.originalStyles.contentWrapper) {
+      Object.entries(sidebarState.originalStyles.contentWrapper).forEach(([prop, value]) => {
+        contentWrapper.style[prop] = value;
+      });
+    }
+    sidebarState.rightSidebarCollapsed = false;
+  }
 }
 
 // 将函数暴露到全局作用域
 window.BetterAliyunDoc = window.BetterAliyunDoc || {};
 window.BetterAliyunDoc.layout = {
-    adjustLayout: adjustLayout,
-    adjustSidebars: adjustSidebars,
-    toggleLeftSidebar: toggleLeftSidebar,
-    toggleRightSidebar: toggleRightSidebar
+  adjustSidebars: adjustSidebars,
+  toggleLeftSidebar: toggleLeftSidebar,
+  toggleRightSidebar: toggleRightSidebar,
+  collapseLeftSidebar: collapseLeftSidebar,
+  collapseRightSidebar: collapseRightSidebar
 };
