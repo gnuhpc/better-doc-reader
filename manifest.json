@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Better Doc Reader",
   "description": "A tool for enhancing technical documentation.",
-  "version": "1.7",
+  "version": "1.8",
   "permissions": [
     "activeTab",
     "commands",

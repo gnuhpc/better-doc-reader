@@ -60,16 +60,21 @@ function toggleContent() {
             padding: 0 !important;
         `;
 
-    // 为help icon添加点击事件处理
+    // 为help icon和expandable-title-bold添加点击事件处理
     const helpIcons = clonedContent.querySelectorAll('.help-iconfont.help-icon-zhankai1.smallFont');
-    helpIcons.forEach((icon) => {
-      icon.addEventListener('click', (e) => {
+    const expandableTitles = clonedContent.querySelectorAll('.expandable-title-bold');
+
+    const addExpandHandler = (element) => {
+      element.addEventListener('click', (e) => {
         const section = e.target.closest('section');
         if (section) {
           section.classList.toggle('expanded');
         }
       });
-    });
+    };
+
+    helpIcons.forEach(addExpandHandler);
+    expandableTitles.forEach(addExpandHandler);
 
     // 为tabbed-content-box添加点击事件处理
     const tabbedContentBoxes = clonedContent.querySelectorAll('.tabbed-content-box');
