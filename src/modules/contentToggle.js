@@ -338,12 +338,39 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
     rightClose.addEventListener('click', () => closeRight(0));
   }
 
-  leftDrawer.addEventListener('click', (e) => {
-    const link = e.target.closest('a');
-    if (link && link.href) {
-      closeLeft(150);
-    }
-  });
+  leftDrawer.addEventListener(
+    'click',
+    (e) => {
+      const link = e.target.closest('a') || e.target.querySelector(':scope > a');
+      if (link && link.href) {
+        closeLeft(150);
+
+        // 如果用户按住修饰键（Cmd/Ctrl/Shift）或带有 target="_blank"，在新标签页打开
+        if (e.metaKey || e.ctrlKey || e.shiftKey || link.target === '_blank') {
+          window.open(link.href, '_blank');
+          return;
+        }
+
+        try {
+          const targetUrl = new window.URL(link.href, window.location.href);
+          const currentUrl = new window.URL(window.location.href);
+
+          // 如果是跨页文档链接（路径或查询参数不同）
+          if (targetUrl.pathname !== currentUrl.pathname || targetUrl.search !== currentUrl.search) {
+            window.location.href = link.href;
+          } else if (targetUrl.hash) {
+            const targetEl = document.querySelector(targetUrl.hash);
+            if (targetEl) {
+              targetEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        } catch (err) {
+          window.location.href = link.href;
+        }
+      }
+    },
+    true
+  );
 
   rightDrawer.addEventListener('click', (e) => {
     const item = e.target.closest('.bad-outline-item');
