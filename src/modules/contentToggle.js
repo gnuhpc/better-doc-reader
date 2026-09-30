@@ -165,12 +165,48 @@ function toggleContent() {
   }
 }
 
+let liveLeftMenu = null;
+let leftMenuPlaceholder = null;
+
 // 清理悬浮抽屉
 function cleanupHoverDrawers() {
   if (window.__betterAliyunDocDrawerCleanup) {
     window.__betterAliyunDocDrawerCleanup();
     window.__betterAliyunDocDrawerCleanup = null;
   }
+
+  // 恢复之前移动到抽屉中的实时目录节点回原DOM位置
+  if (liveLeftMenu) {
+    if (leftMenuPlaceholder && leftMenuPlaceholder.parentNode) {
+      leftMenuPlaceholder.parentNode.insertBefore(liveLeftMenu, leftMenuPlaceholder);
+      leftMenuPlaceholder.remove();
+    }
+    if (liveLeftMenu._badOriginalStyle) {
+      liveLeftMenu.style.display = liveLeftMenu._badOriginalStyle.display;
+      liveLeftMenu.style.visibility = liveLeftMenu._badOriginalStyle.visibility;
+      liveLeftMenu.style.opacity = liveLeftMenu._badOriginalStyle.opacity;
+      liveLeftMenu.style.transform = liveLeftMenu._badOriginalStyle.transform;
+      liveLeftMenu.style.width = liveLeftMenu._badOriginalStyle.width;
+      liveLeftMenu.style.height = liveLeftMenu._badOriginalStyle.height;
+      liveLeftMenu.style.position = liveLeftMenu._badOriginalStyle.position;
+      liveLeftMenu.style.maxHeight = liveLeftMenu._badOriginalStyle.maxHeight;
+      liveLeftMenu.style.overflow = liveLeftMenu._badOriginalStyle.overflow;
+      delete liveLeftMenu._badOriginalStyle;
+    } else {
+      liveLeftMenu.style.display = '';
+      liveLeftMenu.style.visibility = '';
+      liveLeftMenu.style.opacity = '';
+      liveLeftMenu.style.transform = '';
+      liveLeftMenu.style.width = '';
+      liveLeftMenu.style.height = '';
+      liveLeftMenu.style.position = '';
+      liveLeftMenu.style.maxHeight = '';
+      liveLeftMenu.style.overflow = '';
+    }
+  }
+  liveLeftMenu = null;
+  leftMenuPlaceholder = null;
+
   const elIds = [
     'betterAliyunDoc-drawer-styles',
     'betterAliyunDoc-left-trigger',
@@ -301,6 +337,20 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
   if (rightClose) {
     rightClose.addEventListener('click', () => closeRight(0));
   }
+
+  leftDrawer.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.href) {
+      closeLeft(150);
+    }
+  });
+
+  rightDrawer.addEventListener('click', (e) => {
+    const item = e.target.closest('.bad-outline-item');
+    if (item) {
+      closeRight(150);
+    }
+  });
 
   const handleMouseMove = (e) => {
     if (e.clientX <= 16) {
@@ -460,19 +510,11 @@ function setupHoverDrawers() {
       height: auto !important;
       background: transparent !important;
     }
-    .bad-drawer-left a,
-    .bad-drawer-left span[class*="menuItemText"] {
-      color: #222 !important;
-      font-size: 13px !important;
+    .bad-drawer-left a {
       text-decoration: none !important;
     }
     .bad-drawer-left li {
       list-style: none !important;
-      margin: 4px 0 !important;
-    }
-    .bad-drawer-left li:hover > span,
-    .bad-drawer-left a:hover {
-      color: #1890ff !important;
     }
 
     .bad-outline-item {
@@ -555,26 +597,31 @@ function setupHoverDrawers() {
   document.body.appendChild(rightDrawer);
 
   const leftBody = leftDrawer.querySelector('#betterAliyunDoc-left-drawer-body');
-  if (originalLeft) {
-    const clonedLeft = originalLeft.cloneNode(true);
-    clonedLeft.style.display = 'block';
-    clonedLeft.style.width = '100%';
-    clonedLeft.style.height = 'auto';
-    clonedLeft.style.position = 'static';
-    clonedLeft.addEventListener('click', (e) => {
-      const link = e.target.closest('a');
-      if (link) return;
-      const toggleItem = e.target.closest('li, [class*="menuItem"], [class*="Menu--level"]');
-      if (toggleItem) {
-        const subList = toggleItem.querySelector('ul') || toggleItem.nextElementSibling;
-        if (subList && (subList.tagName === 'UL' || subList.className.includes('Menu--') || subList.className.includes('level'))) {
-          const isHidden = subList.style.display === 'none';
-          subList.style.display = isHidden ? '' : 'none';
-          toggleItem.classList.toggle('Menu--open', isHidden);
-        }
-      }
-    });
-    leftBody.appendChild(clonedLeft);
+  if (originalLeft && originalLeft.parentNode) {
+    liveLeftMenu = originalLeft;
+    leftMenuPlaceholder = document.createComment('betterAliyunDoc-left-placeholder');
+    originalLeft.parentNode.insertBefore(leftMenuPlaceholder, originalLeft);
+
+    liveLeftMenu._badOriginalStyle = {
+      display: originalLeft.style.display,
+      visibility: originalLeft.style.visibility,
+      opacity: originalLeft.style.opacity,
+      transform: originalLeft.style.transform,
+      width: originalLeft.style.width,
+      height: originalLeft.style.height,
+      position: originalLeft.style.position,
+      maxHeight: originalLeft.style.maxHeight,
+      overflow: originalLeft.style.overflow
+    };
+
+    originalLeft.style.display = 'block';
+    originalLeft.style.visibility = 'visible';
+    originalLeft.style.opacity = '1';
+    originalLeft.style.transform = 'none';
+    originalLeft.style.width = '100%';
+    originalLeft.style.height = 'auto';
+    originalLeft.style.position = 'static';
+    leftBody.appendChild(originalLeft);
   } else {
     leftBody.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:24px 0;">未找到左侧目录</p>';
   }
