@@ -1,6 +1,6 @@
 {
   "name": "better-aliyun-doc",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "A browser extension to improve Aliyun documentation",
   "type": "module",
   "scripts": {

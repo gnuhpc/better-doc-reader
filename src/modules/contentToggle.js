@@ -167,9 +167,14 @@ function toggleContent() {
 
 let liveLeftMenu = null;
 let leftMenuPlaceholder = null;
+let leftMenuRetryTimer = null;
 
 // 清理悬浮抽屉
 function cleanupHoverDrawers() {
+  if (leftMenuRetryTimer) {
+    window.clearInterval(leftMenuRetryTimer);
+    leftMenuRetryTimer = null;
+  }
   if (window.__betterAliyunDocDrawerCleanup) {
     window.__betterAliyunDocDrawerCleanup();
     window.__betterAliyunDocDrawerCleanup = null;
@@ -218,6 +223,68 @@ function cleanupHoverDrawers() {
     const el = document.getElementById(id);
     if (el) el.remove();
   });
+}
+
+// 获取原始左侧目录节点
+function getOriginalLeftMenu() {
+  return (
+    document.querySelector('.aliyun-docs-menu') ||
+    document.querySelector('#aliyun-docs-menu') ||
+    document.querySelector('div[class*="Menu--helpMenuBox"]') ||
+    document.querySelector('#help-menu-box') ||
+    document.querySelector('div[class*="helpMenuBox"]') ||
+    document.querySelector('[class*="helpMenu--"]') ||
+    document.querySelector('#common-menu-container')?.closest('[class*="helpMenuBox"], nav, div')
+  );
+}
+
+// 获取原始右侧边栏节点
+function getOriginalRightMenu() {
+  return (
+    document.querySelector('.aliyun-docs-side') ||
+    document.querySelector('#aliyun-docs-side-content') ||
+    document.querySelector('div[class*="sideContent"]')
+  );
+}
+
+// 将左侧目录真实节点挂载到抽屉中
+function mountLeftMenu(leftBody) {
+  if (!leftBody) return false;
+  if (liveLeftMenu && leftBody.contains(liveLeftMenu)) {
+    return true;
+  }
+
+  const originalLeft = getOriginalLeftMenu();
+  if (originalLeft && originalLeft.parentNode && originalLeft !== leftBody && !leftBody.contains(originalLeft)) {
+    liveLeftMenu = originalLeft;
+    leftMenuPlaceholder = document.createComment('betterAliyunDoc-left-placeholder');
+    originalLeft.parentNode.insertBefore(leftMenuPlaceholder, originalLeft);
+
+    liveLeftMenu._badOriginalStyle = {
+      display: originalLeft.style.display,
+      visibility: originalLeft.style.visibility,
+      opacity: originalLeft.style.opacity,
+      transform: originalLeft.style.transform,
+      width: originalLeft.style.width,
+      height: originalLeft.style.height,
+      position: originalLeft.style.position,
+      maxHeight: originalLeft.style.maxHeight,
+      overflow: originalLeft.style.overflow
+    };
+
+    originalLeft.style.display = 'block';
+    originalLeft.style.visibility = 'visible';
+    originalLeft.style.opacity = '1';
+    originalLeft.style.transform = 'none';
+    originalLeft.style.width = '100%';
+    originalLeft.style.height = 'auto';
+    originalLeft.style.position = 'static';
+
+    leftBody.innerHTML = '';
+    leftBody.appendChild(originalLeft);
+    return true;
+  }
+  return false;
 }
 
 // 填充右侧大纲抽屉（本页导读 / 跳转）
@@ -309,6 +376,13 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
     window.clearTimeout(leftTimer);
     window.clearTimeout(rightTimer);
     closeRight(0);
+    // 异步加载容错：若之前未能成功获取目录，在用户打开抽屉时立即尝试挂载
+    if (!liveLeftMenu) {
+      const leftBody = leftDrawer.querySelector('#betterAliyunDoc-left-drawer-body');
+      if (leftBody) {
+        mountLeftMenu(leftBody);
+      }
+    }
     leftDrawer.classList.add('bad-drawer-open');
   };
 
@@ -316,6 +390,11 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
     window.clearTimeout(leftTimer);
     window.clearTimeout(rightTimer);
     closeLeft(0);
+    // 异步加载容错：若大纲尚未生成，在用户打开抽屉时重新提取
+    const rightBody = rightDrawer.querySelector('#betterAliyunDoc-right-drawer-body');
+    if (rightBody && (rightBody.children.length === 0 || rightBody.textContent.includes('当前页面暂无大纲'))) {
+      populateRightOutline(rightBody, getOriginalRightMenu());
+    }
     rightDrawer.classList.add('bad-drawer-open');
   };
 
@@ -408,8 +487,7 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
 function setupHoverDrawers() {
   cleanupHoverDrawers();
 
-  const originalLeft = document.querySelector('.aliyun-docs-menu') || document.querySelector('div[class*="Menu--helpMenuBox"]');
-  const originalRight = document.querySelector('.aliyun-docs-side') || document.querySelector('#aliyun-docs-side-content');
+  const originalRight = getOriginalRightMenu();
 
   const style = document.createElement('style');
   style.id = 'betterAliyunDoc-drawer-styles';
@@ -624,33 +702,22 @@ function setupHoverDrawers() {
   document.body.appendChild(rightDrawer);
 
   const leftBody = leftDrawer.querySelector('#betterAliyunDoc-left-drawer-body');
-  if (originalLeft && originalLeft.parentNode) {
-    liveLeftMenu = originalLeft;
-    leftMenuPlaceholder = document.createComment('betterAliyunDoc-left-placeholder');
-    originalLeft.parentNode.insertBefore(leftMenuPlaceholder, originalLeft);
-
-    liveLeftMenu._badOriginalStyle = {
-      display: originalLeft.style.display,
-      visibility: originalLeft.style.visibility,
-      opacity: originalLeft.style.opacity,
-      transform: originalLeft.style.transform,
-      width: originalLeft.style.width,
-      height: originalLeft.style.height,
-      position: originalLeft.style.position,
-      maxHeight: originalLeft.style.maxHeight,
-      overflow: originalLeft.style.overflow
-    };
-
-    originalLeft.style.display = 'block';
-    originalLeft.style.visibility = 'visible';
-    originalLeft.style.opacity = '1';
-    originalLeft.style.transform = 'none';
-    originalLeft.style.width = '100%';
-    originalLeft.style.height = 'auto';
-    originalLeft.style.position = 'static';
-    leftBody.appendChild(originalLeft);
-  } else {
-    leftBody.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:24px 0;">未找到左侧目录</p>';
+  if (!mountLeftMenu(leftBody)) {
+    leftBody.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:24px 0;">目录加载中...</p>';
+    let retries = 0;
+    if (leftMenuRetryTimer) {
+      window.clearInterval(leftMenuRetryTimer);
+    }
+    leftMenuRetryTimer = window.setInterval(() => {
+      retries++;
+      if (mountLeftMenu(leftBody) || retries >= 30) {
+        window.clearInterval(leftMenuRetryTimer);
+        leftMenuRetryTimer = null;
+        if (!liveLeftMenu && retries >= 30) {
+          leftBody.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:24px 0;">未找到左侧目录</p>';
+        }
+      }
+    }, 100);
   }
 
   const rightBody = rightDrawer.querySelector('#betterAliyunDoc-right-drawer-body');
