@@ -113,36 +113,50 @@ function syncContentOnly() {
 
 // 监听原始正文包裹层的 DOM 变化
 let contentObserver = null;
+let urlCheckInterval = null;
+let lastKnownHref = window.location.href;
+
+function checkUrlChange() {
+  if (window.location.href !== lastKnownHref) {
+    lastKnownHref = window.location.href;
+    if (window.__betterAliyunDoc?.isContentOnly) {
+      window.clearTimeout(spaSyncTimer);
+      spaSyncTimer = window.setTimeout(syncContentOnly, 60);
+    }
+  }
+}
+
+window.addEventListener('popstate', checkUrlChange);
+
 function setupContentObserver() {
   if (contentObserver) {
     contentObserver.disconnect();
     contentObserver = null;
   }
 
-  const contentWrapper =
+  const content = document.querySelector('.aliyun-docs-content');
+  const parent =
+    content?.parentElement ||
     document.querySelector('.aliyun-docs-content-wrapper') ||
     document.querySelector('main#aliyun-docs-view') ||
-    document.querySelector('#docs-container') ||
-    document.querySelector('.aliyun-docs-content')?.parentElement;
+    document.querySelector('#docs-container');
 
-  if (contentWrapper) {
-    contentObserver = new MutationObserver((mutations) => {
-      const hasContentChange = mutations.some((m) =>
-        Array.from(m.addedNodes).some((n) =>
-          n.nodeType === window.Node.ELEMENT_NODE &&
-          (n.matches?.('.aliyun-docs-content') ||
-           n.querySelector?.('.aliyun-docs-content') ||
-           n.closest?.('.aliyun-docs-content'))
-        )
-      );
+  contentObserver = new MutationObserver(() => {
+    window.clearTimeout(spaSyncTimer);
+    spaSyncTimer = window.setTimeout(syncContentOnly, 50);
+  });
 
-      if (hasContentChange) {
-        window.clearTimeout(spaSyncTimer);
-        spaSyncTimer = window.setTimeout(syncContentOnly, 80);
-      }
-    });
+  // 监听正文内容内部的所有节点与文本变化
+  if (content) {
+    contentObserver.observe(content, { childList: true, subtree: true, characterData: true });
+  }
+  if (parent) {
+    contentObserver.observe(parent, { childList: true });
+  }
 
-    contentObserver.observe(contentWrapper, { childList: true, subtree: true });
+  if (!urlCheckInterval) {
+    lastKnownHref = window.location.href;
+    urlCheckInterval = window.setInterval(checkUrlChange, 100);
   }
 }
 
@@ -155,37 +169,10 @@ function cleanupContentObserver() {
     window.clearTimeout(spaSyncTimer);
     spaSyncTimer = null;
   }
-}
-
-// 监听 SPA 路由变化（pushState / replaceState / popstate）
-let lastKnownPath = window.location.pathname + window.location.search;
-function checkUrlChange() {
-  const currentPath = window.location.pathname + window.location.search;
-  if (currentPath !== lastKnownPath) {
-    lastKnownPath = currentPath;
-    if (window.__betterAliyunDoc?.isContentOnly) {
-      window.clearTimeout(spaSyncTimer);
-      spaSyncTimer = window.setTimeout(syncContentOnly, 100);
-    }
+  if (urlCheckInterval) {
+    window.clearInterval(urlCheckInterval);
+    urlCheckInterval = null;
   }
-}
-
-window.addEventListener('popstate', checkUrlChange);
-
-if (!window.__betterAliyunDocHistoryHooked) {
-  window.__betterAliyunDocHistoryHooked = true;
-  const origPush = window.history.pushState;
-  window.history.pushState = function(...args) {
-    const res = origPush.apply(this, args);
-    checkUrlChange();
-    return res;
-  };
-  const origReplace = window.history.replaceState;
-  window.history.replaceState = function(...args) {
-    const res = origReplace.apply(this, args);
-    checkUrlChange();
-    return res;
-  };
 }
 
 // 保存当前左侧目录的展开状态到 sessionStorage
@@ -605,7 +592,7 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
   }
 
   leftDrawer.addEventListener('click', (e) => {
-    const link = e.target.closest('a') || e.target.querySelector(':scope > a');
+    const link = e.target.closest('a') || e.target.closest('li')?.querySelector(':scope > a');
     if (link && link.href) {
       // 记录展开状态
       saveExpandedMenuState();
@@ -630,12 +617,45 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
           return;
         }
 
+        // 如果是当前正在浏览的文章，无需重复跳转
+        if (targetUrl.pathname === currentUrl.pathname && targetUrl.search === currentUrl.search) {
+          closeLeft(150);
+          return;
+        }
+
         // 外部链接不干预
         if (targetUrl.origin !== currentUrl.origin) {
           return;
         }
 
-        // 同站文档链接：平滑关闭抽屉，让 React SPA 路由无刷新更新正文与目录状态，绝不强制刷新页面！
+        // 记录跳转前信息用于监测 React SPA 路由跳转
+        const prevHref = window.location.href;
+        const prevHeading = document.querySelector('.aliyun-docs-content h1')?.textContent?.trim() || '';
+
+        // 启动高频导航监听，确保正文同步且菜单目录保持展开
+        let checkCount = 0;
+        const checkNavInterval = window.setInterval(() => {
+          checkCount++;
+          const currentHeading = document.querySelector('.aliyun-docs-content h1')?.textContent?.trim() || '';
+          const urlChanged = window.location.href !== prevHref;
+          const headingChanged = currentHeading && currentHeading !== prevHeading;
+
+          if (headingChanged || (urlChanged && checkCount >= 2)) {
+            window.clearInterval(checkNavInterval);
+            syncContentOnly();
+            return;
+          }
+
+          // 1.2s 内若 React SPA 未响应或未被当前 SPA 路由接管，降级为原生页面跳转
+          if (checkCount >= 12) {
+            window.clearInterval(checkNavInterval);
+            if (window.location.href === prevHref && link.href) {
+              window.location.href = link.href;
+            }
+          }
+        }, 100);
+
+        // 同站文档链接：平滑关闭抽屉，让 React SPA 路由无刷新更新正文与目录状态
         closeLeft(250);
       } catch (err) {
         // 容错
