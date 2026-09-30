@@ -1,5 +1,9 @@
-// 检查页面是否可以被提取
 window.checkPage = function() {
+  const isDoc = window.BetterAliyunDoc?.isDocumentationPage
+    ? window.BetterAliyunDoc.isDocumentationPage()
+    : true;
+  if (!isDoc) return false;
+
   console.log('[BetterAliyunDoc] Checking page');
   const content = document.querySelector('.aliyun-docs-content');
   const isExtractable = content !== null;
@@ -17,6 +21,11 @@ window.checkPage = function() {
 
 // 切换内容显示模式
 function toggleContent() {
+  // 仅在官方文档页面运行
+  if (window.BetterAliyunDoc?.isDocumentationPage && !window.BetterAliyunDoc.isDocumentationPage()) {
+    return;
+  }
+
   // 确保全局状态已初始化
   if (!window.__betterAliyunDoc) {
     if (window.BetterAliyunDoc && window.BetterAliyunDoc.init) {
@@ -34,6 +43,9 @@ function toggleContent() {
   }
 
   if (!window.__betterAliyunDoc.isContentOnly) {
+    // 标记根元素为纯享模式
+    document.documentElement.setAttribute('data-bad-content-only', 'true');
+
     // 隐藏所有现有内容但保留它们
     Array.from(document.body.children).forEach((child) => {
       child.style.display = 'none';
@@ -130,6 +142,9 @@ function toggleContent() {
     // 启用侧边抽屉悬浮交互（鼠标靠近左右两侧浮现目录/大纲）
     setupHoverDrawers();
   } else {
+    // 移除根元素纯享模式标记
+    document.documentElement.removeAttribute('data-bad-content-only');
+
     // 清理侧边悬浮抽屉
     cleanupHoverDrawers();
 

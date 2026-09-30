@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Better Doc Reader",
   "description": "A tool for enhancing technical documentation.",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "permissions": [
     "activeTab",
     "commands",
@@ -69,6 +69,16 @@
     "matches": [
       "*://*.aliyun.com/*",
       "*://*.alibabacloud.com/*"
+    ],
+    "exclude_matches": [
+      "*://*.console.aliyun.com/*",
+      "*://*.console.alibabacloud.com/*",
+      "*://console.aliyun.com/*",
+      "*://console.alibabacloud.com/*",
+      "*://*-console.aliyun.com/*",
+      "*://console-*.aliyun.com/*",
+      "*://*.aliyun.com/console/*",
+      "*://*.alibabacloud.com/console/*"
     ]
   }],
   "content_scripts": [
@@ -76,6 +86,16 @@
       "matches": [
         "*://*.aliyun.com/*",
         "*://*.alibabacloud.com/*"
+      ],
+      "exclude_matches": [
+        "*://*.console.aliyun.com/*",
+        "*://*.console.alibabacloud.com/*",
+        "*://console.aliyun.com/*",
+        "*://console.alibabacloud.com/*",
+        "*://*-console.aliyun.com/*",
+        "*://console-*.aliyun.com/*",
+        "*://*.aliyun.com/console/*",
+        "*://*.alibabacloud.com/console/*"
       ],
       "js": [
         "src/modules/init.js",
@@ -88,7 +108,7 @@
         "content.js"
       ],
       "run_at": "document_start",
-      "all_frames": true
+      "all_frames": false
     }
   ]
 }

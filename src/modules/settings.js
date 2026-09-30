@@ -55,6 +55,24 @@
   let pendingSettings = {};
   function saveSetting(key, val) {
     pendingSettings[key] = val;
+
+    // 同步将关键防闪烁配置镜像到 localStorage，以便 document_start 阶段实现 0ms 同步读取
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        if (key === 'isContentOnly') {
+          window.localStorage.setItem('better_doc_reader_isContentOnly', String(val));
+        } else if (key === 'currentTheme') {
+          if (val) {
+            window.localStorage.setItem('better_doc_reader_theme', String(val));
+          } else {
+            window.localStorage.removeItem('better_doc_reader_theme');
+          }
+        }
+      }
+    } catch (e) {
+      // 忽略存储配额或私密模式错误
+    }
+
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(async () => {
       try {
@@ -73,6 +91,21 @@
   // 重置设置为默认官方设置
   async function resetSettings() {
     try {
+      // 同步清理 localStorage 中的快速配置
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('better_doc_reader_isContentOnly');
+        window.localStorage.removeItem('better_doc_reader_theme');
+      }
+      // 移除根节点防闪烁属性与内联样式
+      if (document.documentElement) {
+        document.documentElement.removeAttribute('data-bad-content-only');
+        document.documentElement.removeAttribute('data-bad-theme');
+      }
+      const antiFlicker = document.getElementById('betterAliyunDoc-anti-flicker');
+      if (antiFlicker) {
+        antiFlicker.remove();
+      }
+
       const storage = getStorage();
       pendingSettings = {};
       await storage.set(SETTINGS_KEY, { ...defaultSettings });
@@ -84,8 +117,33 @@
 
   // 恢复并应用已保存设置到当前文档页面
   async function restorePageSettings() {
+    const isDoc = window.BetterAliyunDoc?.isDocumentationPage
+      ? window.BetterAliyunDoc.isDocumentationPage()
+      : true;
+    if (!isDoc) return;
+
+    // 0ms 快速路径：如果在 document_start 时已标记纯享模式，且当前尚未切换
+    const fastContentOnly = window.localStorage?.getItem('better_doc_reader_isContentOnly') === 'true';
+    if (fastContentOnly && window.BetterAliyunDoc?.content && !window.__betterAliyunDoc?.isContentOnly) {
+      window.BetterAliyunDoc.content.toggleContent();
+    }
+
     const settings = await loadSettings();
     console.log('[BetterAliyunDoc] Restoring page settings on new document:', settings);
+
+    // 保持 localStorage 同步
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('better_doc_reader_isContentOnly', String(!!settings.isContentOnly));
+        if (settings.currentTheme) {
+          window.localStorage.setItem('better_doc_reader_theme', settings.currentTheme);
+        } else {
+          window.localStorage.removeItem('better_doc_reader_theme');
+        }
+      }
+    } catch (e) {
+      // 忽略
+    }
 
     // 1. 恢复主题
     if (settings.currentTheme && window.BetterAliyunDoc?.theme) {
@@ -99,7 +157,12 @@
         window.BetterAliyunDoc.content.toggleContent();
       }
     } else {
-      // 如果不是纯享模式，恢复侧边栏折叠状态
+      // 如果不是纯享模式，确保移除防闪烁属性
+      if (document.documentElement) {
+        document.documentElement.removeAttribute('data-bad-content-only');
+      }
+
+      // 恢复侧边栏折叠状态
       if (settings.leftCollapsed && window.BetterAliyunDoc?.layout) {
         window.BetterAliyunDoc.layout.toggleLeftSidebar();
       }

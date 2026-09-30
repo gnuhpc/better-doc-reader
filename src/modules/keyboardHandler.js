@@ -5,6 +5,11 @@
     return;
   }
 
+  // 严格限制只在阿里云官方文档页面生效，控制台等页面直接退出
+  if (window.BetterAliyunDoc?.isDocumentationPage && !window.BetterAliyunDoc.isDocumentationPage()) {
+    return;
+  }
+
   console.log('[BetterAliyunDoc] Loading keyboard handler module...');
   // 确保 BetterAliyunDoc 命名空间存在
   window.BetterAliyunDoc = window.BetterAliyunDoc || {};
@@ -22,6 +27,10 @@
 
     // 处理键盘事件的函数
     handleKeyDown: function(e) {
+      if (window.BetterAliyunDoc?.isDocumentationPage && !window.BetterAliyunDoc.isDocumentationPage()) {
+        return;
+      }
+
       // 避免在输入框或文本编辑区中误触快捷键
       const target = e.target;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
