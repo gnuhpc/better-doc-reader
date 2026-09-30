@@ -271,6 +271,7 @@ function applyDarkModeToSpecificElements() {
 function applyThemeStyles(theme) {
   window.BetterAliyunDoc = window.BetterAliyunDoc || {};
   window.BetterAliyunDoc.currentTheme = theme;
+  window.BetterAliyunDoc.settings?.saveSetting('currentTheme', theme);
 
   let styleElement = document.getElementById('better-aliyun-doc-theme');
 

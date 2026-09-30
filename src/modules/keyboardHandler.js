@@ -41,9 +41,16 @@
           e.stopPropagation();
           window.BetterAliyunDoc.layout.toggleLeftSidebar();
           return false;
-        } else if (e.key === ']' || e.code === 'BracketRight' || e.key === 'r' || e.key === 'R' || e.code === 'KeyR') {
-          // 处理侧边栏快捷键：支持 Alt + R / Option + ]
-          console.log('[BetterAliyunDoc] Option + R / ] pressed');
+        } else if (e.key === 'r' || e.key === 'R' || e.code === 'KeyR') {
+          // Alt + R 重置页面布局到官方默认页面
+          console.log('[BetterAliyunDoc] Option + R pressed: Reset to official layout');
+          e.preventDefault();
+          e.stopPropagation();
+          window.BetterAliyunDoc.layout.resetToOfficialLayout();
+          return false;
+        } else if (e.key === ']' || e.code === 'BracketRight') {
+          // Option + ] 收起/恢复右侧边栏
+          console.log('[BetterAliyunDoc] Option + ] pressed');
           e.preventDefault();
           e.stopPropagation();
           window.BetterAliyunDoc.layout.toggleRightSidebar();

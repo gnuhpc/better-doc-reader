@@ -28,6 +28,7 @@ window.BetterAliyunDoc.init = {
       const checkModules = () => {
         const modules = [
           'notes',
+          'settings',
           'layout',
           'keyboard',
           'content',
@@ -61,6 +62,7 @@ window.BetterAliyunDoc.init = {
     window.BetterAliyunDoc.layout = null;
     window.BetterAliyunDoc.content = null;
     window.BetterAliyunDoc.theme = null;
+    window.BetterAliyunDoc.settings = null;
     window.__betterAliyunDoc.initialized = true;
   },
 
@@ -97,6 +99,11 @@ window.BetterAliyunDoc.init = {
       // 标记为已初始化
       window.__betterAliyunDoc.initialized = true;
       console.log('[BetterAliyunDoc] All modules initialized');
+
+      // 自动恢复上次保存的页面布局设置（纯享模式/主题/侧边栏状态/正文宽度）
+      if (window.BetterAliyunDoc.settings) {
+        window.BetterAliyunDoc.settings.restorePageSettings();
+      }
     } catch (error) {
       console.error('[BetterAliyunDoc] Error during module initialization:', error);
       // Still try to initialize notes module even if other modules fail

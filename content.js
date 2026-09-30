@@ -116,6 +116,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       window.BetterAliyunDoc.layout.adjustSidebars('narrow');
     }
     sendResponse({ status: 'success' });
+  } else if (message.command === 'reset-layout' || message.action === 'resetLayout') {
+    if (window.BetterAliyunDoc && window.BetterAliyunDoc.layout) {
+      window.BetterAliyunDoc.layout.resetToOfficialLayout();
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, error: 'Layout module not loaded' });
+    }
   }
   return true;
 });

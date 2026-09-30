@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Better Doc Reader",
   "description": "A tool for enhancing technical documentation.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "permissions": [
     "activeTab",
     "commands",
@@ -39,6 +39,9 @@
     },
     "collapse-right-sidebar": {
       "description": "Collapse the right sidebar"
+    },
+    "reset-layout": {
+      "description": "Reset layout to official default"
     }
   },
   "action": {
@@ -76,6 +79,7 @@
       ],
       "js": [
         "src/modules/init.js",
+        "src/modules/settings.js",
         "src/modules/darkMode.js",
         "src/modules/layout.js",
         "src/modules/keyboardHandler.js",

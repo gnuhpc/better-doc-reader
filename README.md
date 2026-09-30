@@ -17,6 +17,8 @@ gnuhpc
 - **Intelligent Sidebar Management**:
   - Collapse / restore the left navigation tree (`Alt + L` or `Option + [`)
   - Collapse / restore the right table of contents (`Alt + R` or `Option + ]`), automatically expanding main content to 100% width
+- **Persistent Page Settings**: Remembers your preferred reading settings (Content-Only mode, reading theme, sidebar states, content width) and automatically applies them when navigating to any new documentation page.
+- **Reset to Official Layout (`Alt + R`)**: Quickly reset the page layout and styling back to the official default state at any time.
 - **Content Area Width Adjustment**:
   - Narrow content width (`Alt + Left`)
   - Widen content width (`Alt + Right`)
@@ -39,6 +41,8 @@ gnuhpc
 ### 特性
 
 - **专注阅读模式（`Alt + F`）**：一键在官方完整页面与去干扰纯内容模式之间平滑切换。在纯享模式下，鼠标轻移至屏幕左侧边缘即可呼出浮动产品目录抽屉，移动至右侧边缘即可呼出页内跳转大纲抽屉，点击小节标题可平滑定位跳转。
+- **跨页面自动记忆设置**：自动记住上次使用的页面布局（纯享模式、阅读主题、侧边栏折叠状态、正文宽度），下次打开任何新文档自动继承，无需重复配置。
+- **一键重置为官方布局（`Alt + R`）**：随时按 `Alt + R` 或在插件弹窗中点击“重置布局”，一键恢复官方原始页面排版，并重置存储设置。
 - **多款护眼主题**：按 `Alt + D` 循环切换阅读主题：
   - 🌙 **深色模式**：高对比度暗黑风格，夜间阅读不伤眼
   - 🍃 **护眼绿**：柔和淡绿底色，缓解长时间阅读疲劳
@@ -46,7 +50,7 @@ gnuhpc
   - ☀️ **默认主题**：恢复文档原始配色
 - **智能侧边栏收起/恢复**：
   - 收起/恢复左侧导航菜单（`Alt + L` 或 Mac 上的 `Option + [`）
-  - 收起/恢复右侧目录大纲（`Alt + R` 或 Mac 上的 `Option + ]`），正文自动平滑伸展占满屏幕
+  - 收起/恢复右侧目录大纲（`Alt + ]` 或 Mac 上的 `Option + ]`），正文自动平滑伸展占满屏幕
 - **正文宽度精细调整**：
   - 缩小正文宽度（`Alt + Left`）
   - 扩大正文宽度（`Alt + Right`）
@@ -85,9 +89,10 @@ gnuhpc
 | Action / 功能 | Shortcut (Windows/Linux) | Shortcut (macOS) | Description / 说明 |
 | :--- | :--- | :--- | :--- |
 | **切换仅内容视图** | `Alt + F` | `Option + F` | 或在弹窗中点击“切换仅内容” |
-| **切换阅读主题** | `Alt + D` | `Option + D` | 默认 ➔ 深色 ➔ 护眼绿 ➔ 羊皮纸 |
+| **重置为官方布局** | `Alt + R` | `Option + R` | 一键还原页面官方布局与默认设置 |
 | **收起/恢复左侧栏** | `Alt + L` | `Option + L` 或 `Option + [` | 收起/展开左侧导航目录 |
-| **收起/恢复右侧栏** | `Alt + R` | `Option + R` 或 `Option + ]` | 收起/展开右侧大纲并撑满正文 |
+| **收起/恢复右侧栏** | `Alt + ]` | `Option + ]` | 收起/展开右侧大纲并撑满正文 |
+| **切换阅读主题** | `Alt + D` | `Option + D` | 默认 ➔ 深色 ➔ 护眼绿 ➔ 羊皮纸 |
 | **缩小正文宽度** | `Alt + Left` | `Option + Left` | 减小正文容器宽度 |
 | **扩大正文宽度** | `Alt + Right` | `Option + Right` | 增加正文容器宽度 |
 

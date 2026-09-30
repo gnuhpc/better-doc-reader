@@ -58,6 +58,7 @@ function adjustSidebars(mode) {
   // 保存新的宽度状态
   window.__betterAliyunDoc.contentWidth = newWidth;
   window.__betterAliyunDoc.isWideContent = newWidth >= LAYOUT_CONSTANTS.MAX_WIDTH;
+  window.BetterAliyunDoc.settings?.saveSetting('contentWidth', newWidth);
 
   // 保证元素宽度调整和过渡效果的顺序
   applyTransitionEffects([content, leftSidebar, rightSidebar]);
@@ -231,6 +232,7 @@ function toggleLeftSidebar() {
       leftSidebar.style.display = 'none';
     }, 150);
     sidebarState.leftCollapsed = true;
+    window.BetterAliyunDoc.settings?.saveSetting('leftCollapsed', true);
   } else {
     // 恢复左侧边栏
     leftSidebar.style.display = '';
@@ -238,6 +240,7 @@ function toggleLeftSidebar() {
     leftSidebar.style.opacity = '1';
     leftSidebar.style.transform = 'translateX(0)';
     sidebarState.leftCollapsed = false;
+    window.BetterAliyunDoc.settings?.saveSetting('leftCollapsed', false);
   }
 }
 
@@ -273,6 +276,7 @@ function toggleRightSidebar() {
       contentWrapper.style.width = '100%';
     }
     sidebarState.rightCollapsed = true;
+    window.BetterAliyunDoc.settings?.saveSetting('rightCollapsed', true);
   } else {
     // 恢复右侧边栏
     rightSidebar.style.display = '';
@@ -290,7 +294,106 @@ function toggleRightSidebar() {
       contentWrapper.style.width = '';
     }
     sidebarState.rightCollapsed = false;
+    window.BetterAliyunDoc.settings?.saveSetting('rightCollapsed', false);
   }
+}
+
+// 屏幕顶部悬浮轻提示
+function showToast(message) {
+  const existing = document.getElementById('betterAliyunDoc-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'betterAliyunDoc-toast';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.82);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 1000000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  `;
+  document.body.appendChild(toast);
+  window.setTimeout(() => {
+    toast.style.opacity = '0';
+    window.setTimeout(() => toast.remove(), 300);
+  }, 1800);
+}
+
+// 重置页面布局到官方默认页面 (Alt + R)
+function resetToOfficialLayout() {
+  console.log('[BetterAliyunDoc] Resetting layout to official default...');
+
+  // 1. 如果处于专注纯享模式，退出纯享模式
+  if (window.__betterAliyunDoc?.isContentOnly) {
+    if (window.BetterAliyunDoc?.content) {
+      window.BetterAliyunDoc.content.toggleContent();
+    }
+  }
+
+  // 2. 如果左侧边栏处于折叠状态，恢复左侧边栏
+  if (sidebarState.leftCollapsed) {
+    toggleLeftSidebar();
+  }
+
+  // 3. 如果右侧边栏处于折叠状态，恢复右侧边栏
+  if (sidebarState.rightCollapsed) {
+    toggleRightSidebar();
+  }
+
+  // 4. 重置正文宽度调整
+  const content = document.querySelector('.aliyun-docs-content');
+  const leftSidebar = document.querySelector('.aliyun-docs-menu') || document.querySelector('div[class*="Menu--helpMenuBox"]');
+  const rightSidebar = document.querySelector('.aliyun-docs-side');
+  const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper') || content?.closest('[class*="contentWrapper"]') || content?.parentElement;
+
+  if (content) {
+    content.style.width = '';
+    content.style.maxWidth = '';
+    content.style.minWidth = '';
+    content.style.flex = '';
+    content.style.margin = '';
+    content.style.borderRight = '';
+  }
+  if (contentWrapper) {
+    contentWrapper.style.width = '';
+  }
+  if (leftSidebar) {
+    leftSidebar.style.display = '';
+    leftSidebar.style.transform = '';
+    leftSidebar.style.opacity = '';
+    leftSidebar.style.marginLeft = '';
+  }
+  if (rightSidebar) {
+    rightSidebar.style.display = '';
+    rightSidebar.style.transform = '';
+    rightSidebar.style.opacity = '';
+    rightSidebar.style.marginRight = '';
+    rightSidebar.style.width = '';
+    rightSidebar.style.flex = '';
+  }
+
+  // 5. 恢复主题为官方默认
+  if (window.BetterAliyunDoc?.theme) {
+    window.BetterAliyunDoc.theme.applyThemeStyles(null);
+  }
+
+  // 6. 重置并保存默认设置到存储中
+  if (window.BetterAliyunDoc?.settings) {
+    window.BetterAliyunDoc.settings.resetSettings();
+  }
+
+  // 7. 屏幕提示 Toast
+  showToast('已重置页面布局为官方默认');
 }
 
 // 将函数暴露到全局作用域
@@ -300,5 +403,7 @@ window.BetterAliyunDoc.layout = {
   toggleLeftSidebar: toggleLeftSidebar,
   toggleRightSidebar: toggleRightSidebar,
   collapseLeftSidebar: toggleLeftSidebar,
-  collapseRightSidebar: toggleRightSidebar
+  collapseRightSidebar: toggleRightSidebar,
+  resetToOfficialLayout: resetToOfficialLayout,
+  showToast: showToast
 };

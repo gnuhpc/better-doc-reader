@@ -112,6 +112,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Setup reset layout button
+  const resetLayoutBtn = document.getElementById('reset-layout-btn');
+  if (resetLayoutBtn && currentTab?.id) {
+    resetLayoutBtn.addEventListener('click', async () => {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab?.id) {
+          chrome.tabs.sendMessage(tab.id, { action: 'resetLayout' }, () => {
+            if (chrome.runtime.lastError) return;
+            if (viewModeText && toggleViewBtn) {
+              viewModeText.textContent = '切换仅内容';
+              toggleViewBtn.classList.remove('active');
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Error resetting layout:', err);
+      }
+    });
+  }
+
   // Add export button click handler
   exportButton.addEventListener('click', exportNotes);
 

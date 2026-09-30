@@ -125,6 +125,7 @@ function toggleContent() {
     document.body.appendChild(container);
 
     window.__betterAliyunDoc.isContentOnly = true;
+    window.BetterAliyunDoc.settings?.saveSetting('isContentOnly', true);
 
     // 启用侧边抽屉悬浮交互（鼠标靠近左右两侧浮现目录/大纲）
     setupHoverDrawers();
@@ -151,6 +152,7 @@ function toggleContent() {
     }
 
     window.__betterAliyunDoc.isContentOnly = false;
+    window.BetterAliyunDoc.settings?.saveSetting('isContentOnly', false);
   }
 
   // 向 background script 报告状态变化
