@@ -19,6 +19,224 @@ window.checkPage = function() {
   return isExtractable;
 };
 
+// 格式化克隆的正文并绑定交互事件（折叠块、Tab 切换等）
+function formatAndAttachContent(clonedContent) {
+  // 为 help icon 和 expandable-title-bold 添加点击事件处理
+  const helpIcons = clonedContent.querySelectorAll('.help-iconfont.help-icon-zhankai1.smallFont');
+  const expandableTitles = clonedContent.querySelectorAll('.expandable-title-bold');
+
+  const addExpandHandler = (element) => {
+    element.addEventListener('click', (e) => {
+      const section = e.target.closest('section');
+      if (section) {
+        section.classList.toggle('expanded');
+      }
+    });
+  };
+
+  helpIcons.forEach(addExpandHandler);
+  expandableTitles.forEach(addExpandHandler);
+
+  // 为 tabbed-content-box 添加点击事件处理
+  const tabbedContentBoxes = clonedContent.querySelectorAll('.tabbed-content-box');
+  tabbedContentBoxes.forEach((box) => {
+    const tabItems = box.querySelectorAll('.tab-item');
+    const sections = Array.from(box.children).filter((el) =>
+      el.tagName === 'SECTION' && !el.classList.contains('tab-box'));
+    tabItems.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        // 移除所有 tab 的 selected-tab-item 类
+        tabItems.forEach((t) => t.classList.remove('selected-tab-item'));
+        // 给当前点击的 tab 添加 selected-tab-item 类
+        tab.classList.add('selected-tab-item');
+        // 隐藏所有 section
+        sections.forEach((section) => {
+          section.style.display = 'none';
+        });
+        // 显示被点击的 tab 对应的 section
+        const clickedIndex = Array.from(tabItems).indexOf(tab);
+        if (sections[clickedIndex]) {
+          sections[clickedIndex].style.display = 'block';
+        }
+      });
+    });
+  });
+
+  // 确保内容中的所有表格和图片都能适应宽度
+  const tables = clonedContent.getElementsByTagName('table');
+  for (let table of tables) {
+    table.style.width = '100%';
+    table.style.maxWidth = 'none';
+  }
+
+  const images = clonedContent.getElementsByTagName('img');
+  for (let img of images) {
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+  }
+}
+
+// 动态同步最新正文内容到纯享容器（用于 React SPA 客户端路由导航，无需刷新页面）
+let spaSyncTimer = null;
+function syncContentOnly() {
+  if (!window.__betterAliyunDoc?.isContentOnly) return;
+  const container = document.getElementById('betterAliyunDoc-content-only');
+  const content = document.querySelector('.aliyun-docs-content');
+  if (!container || !content) return;
+
+  const clonedContent = content.cloneNode(true);
+  clonedContent.style.cssText = `
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  `;
+  formatAndAttachContent(clonedContent);
+
+  container.innerHTML = '';
+  container.appendChild(clonedContent);
+
+  // 更新右侧大纲导读
+  const rightBody = document.querySelector('#betterAliyunDoc-right-drawer-body');
+  if (rightBody) {
+    populateRightOutline(rightBody, getOriginalRightMenu());
+  }
+
+  // 恢复主题样式
+  if (window.BetterAliyunDoc?.currentTheme && window.BetterAliyunDoc?.theme) {
+    window.BetterAliyunDoc.theme.applyThemeStyles(window.BetterAliyunDoc.currentTheme);
+  }
+
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// 监听原始正文包裹层的 DOM 变化
+let contentObserver = null;
+function setupContentObserver() {
+  if (contentObserver) {
+    contentObserver.disconnect();
+    contentObserver = null;
+  }
+
+  const contentWrapper =
+    document.querySelector('.aliyun-docs-content-wrapper') ||
+    document.querySelector('main#aliyun-docs-view') ||
+    document.querySelector('#docs-container') ||
+    document.querySelector('.aliyun-docs-content')?.parentElement;
+
+  if (contentWrapper) {
+    contentObserver = new MutationObserver((mutations) => {
+      const hasContentChange = mutations.some((m) =>
+        Array.from(m.addedNodes).some((n) =>
+          n.nodeType === window.Node.ELEMENT_NODE &&
+          (n.matches?.('.aliyun-docs-content') ||
+           n.querySelector?.('.aliyun-docs-content') ||
+           n.closest?.('.aliyun-docs-content'))
+        )
+      );
+
+      if (hasContentChange) {
+        window.clearTimeout(spaSyncTimer);
+        spaSyncTimer = window.setTimeout(syncContentOnly, 80);
+      }
+    });
+
+    contentObserver.observe(contentWrapper, { childList: true, subtree: true });
+  }
+}
+
+function cleanupContentObserver() {
+  if (contentObserver) {
+    contentObserver.disconnect();
+    contentObserver = null;
+  }
+  if (spaSyncTimer) {
+    window.clearTimeout(spaSyncTimer);
+    spaSyncTimer = null;
+  }
+}
+
+// 监听 SPA 路由变化（pushState / replaceState / popstate）
+let lastKnownPath = window.location.pathname + window.location.search;
+function checkUrlChange() {
+  const currentPath = window.location.pathname + window.location.search;
+  if (currentPath !== lastKnownPath) {
+    lastKnownPath = currentPath;
+    if (window.__betterAliyunDoc?.isContentOnly) {
+      window.clearTimeout(spaSyncTimer);
+      spaSyncTimer = window.setTimeout(syncContentOnly, 100);
+    }
+  }
+}
+
+window.addEventListener('popstate', checkUrlChange);
+
+if (!window.__betterAliyunDocHistoryHooked) {
+  window.__betterAliyunDocHistoryHooked = true;
+  const origPush = window.history.pushState;
+  window.history.pushState = function(...args) {
+    const res = origPush.apply(this, args);
+    checkUrlChange();
+    return res;
+  };
+  const origReplace = window.history.replaceState;
+  window.history.replaceState = function(...args) {
+    const res = origReplace.apply(this, args);
+    checkUrlChange();
+    return res;
+  };
+}
+
+// 保存当前左侧目录的展开状态到 sessionStorage
+function saveExpandedMenuState() {
+  try {
+    const menu = liveLeftMenu || getOriginalLeftMenu();
+    if (!menu) return;
+    const openLis = menu.querySelectorAll('li[class*="open"], [class*="open"]');
+    const openTexts = [];
+    openLis.forEach((li) => {
+      const textEl = li.querySelector('[class*="menuItemText"], [class*="titleText"], span');
+      const text = textEl?.innerText?.trim();
+      if (text && !openTexts.includes(text)) {
+        openTexts.push(text);
+      }
+    });
+    if (openTexts.length > 0) {
+      window.sessionStorage.setItem('better_doc_expanded_menus', JSON.stringify(openTexts));
+    }
+  } catch (e) {
+    // 忽略存储异常
+  }
+}
+
+// 恢复之前保存在 sessionStorage 中的目录展开结构
+function restoreExpandedMenuState(menu) {
+  try {
+    if (!menu) return;
+    const raw = window.sessionStorage?.getItem('better_doc_expanded_menus');
+    if (!raw) return;
+    const savedTexts = JSON.parse(raw);
+    if (!Array.isArray(savedTexts) || savedTexts.length === 0) return;
+
+    window.setTimeout(() => {
+      const allLis = Array.from(menu.querySelectorAll('li'));
+      savedTexts.forEach((text) => {
+        const li = allLis.find((el) => {
+          const textEl = el.querySelector('[class*="menuItemText"], [class*="titleText"], span');
+          return textEl && textEl.innerText.trim() === text;
+        });
+        if (li && !li.className.includes('open')) {
+          const trigger = li.querySelector('[class*="menuItemWrapper"]') || li;
+          trigger.click();
+        }
+      });
+    }, 120);
+  } catch (e) {
+    // 忽略恢复异常
+  }
+}
+
 // 切换内容显示模式
 function toggleContent() {
   // 仅在官方文档页面运行
@@ -57,76 +275,25 @@ function toggleContent() {
     // 创建新的内容容器
     const container = document.createElement('div');
     container.style.cssText = `
-            width: 96vw;
-            margin: 0 auto;
-            padding: 20px 2vw;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        `;
+      width: 96vw;
+      margin: 0 auto;
+      padding: 20px 2vw;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    `;
 
     // 克隆内容并应用新样式
     const clonedContent = content.cloneNode(true);
     clonedContent.style.cssText = `
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        `;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    `;
 
-    // 为help icon和expandable-title-bold添加点击事件处理
-    const helpIcons = clonedContent.querySelectorAll('.help-iconfont.help-icon-zhankai1.smallFont');
-    const expandableTitles = clonedContent.querySelectorAll('.expandable-title-bold');
-
-    const addExpandHandler = (element) => {
-      element.addEventListener('click', (e) => {
-        const section = e.target.closest('section');
-        if (section) {
-          section.classList.toggle('expanded');
-        }
-      });
-    };
-
-    helpIcons.forEach(addExpandHandler);
-    expandableTitles.forEach(addExpandHandler);
-
-    // 为tabbed-content-box添加点击事件处理
-    const tabbedContentBoxes = clonedContent.querySelectorAll('.tabbed-content-box');
-    tabbedContentBoxes.forEach((box) => {
-      const tabItems = box.querySelectorAll('.tab-item');
-      const sections = Array.from(box.children).filter((el) =>
-        el.tagName === 'SECTION' && !el.classList.contains('tab-box'));
-      tabItems.forEach((tab) => {
-        tab.addEventListener('click', () => {
-          // 移除所有tab的selected-tab-item类
-          tabItems.forEach((t) => t.classList.remove('selected-tab-item'));
-          // 给当前点击的tab添加selected-tab-item类
-          tab.classList.add('selected-tab-item');
-          // 隐藏所有section
-          sections.forEach((section) => {
-            section.style.display = 'none';
-          });
-          // 显示被点击的tab对应的section
-          const clickedIndex = Array.from(tabItems).indexOf(tab);
-          if (sections[clickedIndex]) {
-            sections[clickedIndex].style.display = 'block';
-          }
-        });
-      });
-    });
-
-    // 确保内容中的所有表格和图片都能适应宽度
-    const tables = clonedContent.getElementsByTagName('table');
-    for (let table of tables) {
-      table.style.width = '100%';
-      table.style.maxWidth = 'none';
-    }
-
-    const images = clonedContent.getElementsByTagName('img');
-    for (let img of images) {
-      img.style.maxWidth = '100%';
-      img.style.height = 'auto';
-    }
+    // 格式化并绑定事件
+    formatAndAttachContent(clonedContent);
 
     // 添加内容到容器
     container.appendChild(clonedContent);
@@ -141,6 +308,9 @@ function toggleContent() {
 
     // 启用侧边抽屉悬浮交互（鼠标靠近左右两侧浮现目录/大纲）
     setupHoverDrawers();
+
+    // 监听 React SPA 动态正文变更
+    setupContentObserver();
   } else {
     // 移除根元素纯享模式标记
     document.documentElement.removeAttribute('data-bad-content-only');
@@ -186,6 +356,7 @@ let leftMenuRetryTimer = null;
 
 // 清理悬浮抽屉
 function cleanupHoverDrawers() {
+  cleanupContentObserver();
   if (leftMenuRetryTimer) {
     window.clearInterval(leftMenuRetryTimer);
     leftMenuRetryTimer = null;
@@ -297,6 +468,7 @@ function mountLeftMenu(leftBody) {
 
     leftBody.innerHTML = '';
     leftBody.appendChild(originalLeft);
+    restoreExpandedMenuState(originalLeft);
     return true;
   }
   return false;
@@ -432,39 +604,47 @@ function setupDrawerInteractions(leftTrigger, leftDrawer, rightTrigger, rightDra
     rightClose.addEventListener('click', () => closeRight(0));
   }
 
-  leftDrawer.addEventListener(
-    'click',
-    (e) => {
-      const link = e.target.closest('a') || e.target.querySelector(':scope > a');
-      if (link && link.href) {
-        closeLeft(150);
+  leftDrawer.addEventListener('click', (e) => {
+    const link = e.target.closest('a') || e.target.querySelector(':scope > a');
+    if (link && link.href) {
+      // 记录展开状态
+      saveExpandedMenuState();
 
-        // 如果用户按住修饰键（Cmd/Ctrl/Shift）或带有 target="_blank"，在新标签页打开
-        if (e.metaKey || e.ctrlKey || e.shiftKey || link.target === '_blank') {
-          window.open(link.href, '_blank');
+      // 如果用户按住修饰键（Cmd/Ctrl/Shift）或带有 target="_blank"，在新标签页打开
+      if (e.metaKey || e.ctrlKey || e.shiftKey || link.target === '_blank') {
+        return;
+      }
+
+      try {
+        const targetUrl = new window.URL(link.href, window.location.href);
+        const currentUrl = new window.URL(window.location.href);
+
+        // 如果是本页锚点跳转
+        if (targetUrl.pathname === currentUrl.pathname && targetUrl.search === currentUrl.search && targetUrl.hash) {
+          e.preventDefault();
+          const targetEl = document.querySelector(targetUrl.hash);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth' });
+          }
+          closeLeft(150);
           return;
         }
 
-        try {
-          const targetUrl = new window.URL(link.href, window.location.href);
-          const currentUrl = new window.URL(window.location.href);
-
-          // 如果是跨页文档链接（路径或查询参数不同）
-          if (targetUrl.pathname !== currentUrl.pathname || targetUrl.search !== currentUrl.search) {
-            window.location.href = link.href;
-          } else if (targetUrl.hash) {
-            const targetEl = document.querySelector(targetUrl.hash);
-            if (targetEl) {
-              targetEl.scrollIntoView({ behavior: 'smooth' });
-            }
-          }
-        } catch (err) {
-          window.location.href = link.href;
+        // 外部链接不干预
+        if (targetUrl.origin !== currentUrl.origin) {
+          return;
         }
+
+        // 同站文档链接：平滑关闭抽屉，让 React SPA 路由无刷新更新正文与目录状态，绝不强制刷新页面！
+        closeLeft(250);
+      } catch (err) {
+        // 容错
       }
-    },
-    true
-  );
+    } else {
+      // 用户点击展开/折叠目录项，保存最新展开结构
+      window.setTimeout(saveExpandedMenuState, 200);
+    }
+  });
 
   rightDrawer.addEventListener('click', (e) => {
     const item = e.target.closest('.bad-outline-item');
