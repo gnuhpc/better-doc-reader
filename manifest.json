@@ -67,35 +67,25 @@
       "src/modules/*.js"
     ],
     "matches": [
-      "*://*.aliyun.com/*",
-      "*://*.alibabacloud.com/*"
-    ],
-    "exclude_matches": [
-      "*://*.console.aliyun.com/*",
-      "*://*.console.alibabacloud.com/*",
-      "*://console.aliyun.com/*",
-      "*://console.alibabacloud.com/*",
-      "*://*-console.aliyun.com/*",
-      "*://console-*.aliyun.com/*",
-      "*://*.aliyun.com/console/*",
-      "*://*.alibabacloud.com/console/*"
+      "*://help.aliyun.com/*",
+      "*://help.alibabacloud.com/*",
+      "*://www.aliyun.com/*",
+      "*://www.alibabacloud.com/*"
     ]
   }],
   "content_scripts": [
     {
       "matches": [
-        "*://*.aliyun.com/*",
-        "*://*.alibabacloud.com/*"
+        "*://help.aliyun.com/*",
+        "*://help.alibabacloud.com/*",
+        "*://www.aliyun.com/help/*",
+        "*://www.alibabacloud.com/help/*"
       ],
       "exclude_matches": [
         "*://*.console.aliyun.com/*",
         "*://*.console.alibabacloud.com/*",
         "*://console.aliyun.com/*",
-        "*://console.alibabacloud.com/*",
-        "*://*-console.aliyun.com/*",
-        "*://console-*.aliyun.com/*",
-        "*://*.aliyun.com/console/*",
-        "*://*.alibabacloud.com/console/*"
+        "*://console.alibabacloud.com/*"
       ],
       "js": [
         "src/modules/init.js",
