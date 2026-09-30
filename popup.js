@@ -71,10 +71,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   const notesList = document.getElementById('notes-list');
   const emptyNotes = document.getElementById('empty-notes');
   const exportButton = document.getElementById('export-notes');
+  const toggleViewBtn = document.getElementById('toggle-view-btn');
+  const viewModeText = document.getElementById('view-mode-text');
 
   // Get current tab URL
   const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const currentUrl = currentTab.url.replace(/[?#].*$/, '').replace(/\/$/, '');
+  const currentUrl = currentTab?.url ? currentTab.url.replace(/[?#].*$/, '').replace(/\/$/, '') : '';
+
+  // Setup toggle view button
+  if (toggleViewBtn && currentTab?.id) {
+    chrome.tabs.sendMessage(currentTab.id, { action: 'getPageState' }, (response) => {
+      if (chrome.runtime.lastError || !response) return;
+      if (response.isContentOnly) {
+        viewModeText.textContent = '恢复全页视图';
+        toggleViewBtn.classList.add('active');
+      } else {
+        viewModeText.textContent = '切换仅内容';
+        toggleViewBtn.classList.remove('active');
+      }
+    });
+
+    toggleViewBtn.addEventListener('click', async () => {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab?.id) {
+          chrome.tabs.sendMessage(tab.id, { command: 'toggle-view', source: 'popup' }, (response) => {
+            if (chrome.runtime.lastError) return;
+            if (response?.isContentOnly) {
+              viewModeText.textContent = '恢复全页视图';
+              toggleViewBtn.classList.add('active');
+            } else {
+              viewModeText.textContent = '切换仅内容';
+              toggleViewBtn.classList.remove('active');
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Error toggling view:', err);
+      }
+    });
+  }
 
   // Add export button click handler
   exportButton.addEventListener('click', exportNotes);

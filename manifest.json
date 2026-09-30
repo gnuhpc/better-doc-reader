@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Better Doc Reader",
   "description": "A tool for enhancing technical documentation.",
-  "version": "1.8",
+  "version": "2.0.0",
   "permissions": [
     "activeTab",
     "commands",
@@ -59,16 +59,21 @@
   },
   "author": "gnuhpc",
   "homepage_url": "https://github.com/gnuhpc/better-doc-reader",
-  "privacy_policy": "https://github.com/gnuhpc/better-doc-reader/blob/main/privacy_policy.md",
   "web_accessible_resources": [{
     "resources": [
       "src/modules/*.js"
     ],
-    "matches": ["*://*.aliyun.com/*"]
+    "matches": [
+      "*://*.aliyun.com/*",
+      "*://*.alibabacloud.com/*"
+    ]
   }],
   "content_scripts": [
     {
-      "matches": ["*://*.aliyun.com/*"],
+      "matches": [
+        "*://*.aliyun.com/*",
+        "*://*.alibabacloud.com/*"
+      ],
       "js": [
         "src/modules/init.js",
         "src/modules/darkMode.js",

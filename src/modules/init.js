@@ -116,14 +116,12 @@ window.BetterAliyunDoc.init = {
     }
 
     // 检查URL是否匹配
-    const currentUrl = window.location.href;
-    const validUrls = [
-      'https://www.alibabacloud.com/help',
-      'https://help.aliyun.com/'
-    ];
+    const isAliyunDoc =
+      window.location.hostname.includes('aliyun.com') ||
+      window.location.hostname.includes('alibabacloud.com');
 
-    if (!validUrls.some((url) => currentUrl.startsWith(url))) {
-      console.log('[BetterAliyunDoc] URL not supported, initialization aborted');
+    if (!isAliyunDoc) {
+      console.log('[BetterAliyunDoc] Hostname not supported, initialization aborted');
       this._disableAllModules();
       return;
     }
@@ -131,8 +129,7 @@ window.BetterAliyunDoc.init = {
     // 检查是否为阿里云文档页面
     const contentElement = document.querySelector('.aliyun-docs-content');
     if (!contentElement) {
-      console.log('[BetterAliyunDoc] Content element not found, initialization aborted');
-      this._disableAllModules();
+      console.log('[BetterAliyunDoc] Content element not found yet, waiting for DOM updates');
       return;
     }
 

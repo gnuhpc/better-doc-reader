@@ -1,91 +1,105 @@
 # Better Doc Reader
 
-A Chrome extension that enhances the reading experience of technical documentation by providing a clean, content-focused view.
+A Chrome extension that enhances the reading experience of technical documentation by providing a clean, content-focused view and productivity utilities.
 
 ## Author
 
 gnuhpc
 
-## Better Doc Reader
+## Features
 
-### Features
-- Enhanced reading experience for technical documentation.
-- Switch between full page and content-only views.
-- Quick note-taking functionality:
-  - Select text to save important notes
-  - Access saved notes through the extension popup
-  - Notes automatically sync across Chrome browsers (when signed in)
-- Keyboard shortcuts for quick navigation:
-  - Toggle View: Alt + F
-  - Narrow Content: Alt + Left
-  - Widen Content: Alt + Right
-  - Toggle Dark Mode: Alt + D
-  - Collapse Left Sidebar: Alt + L
-  - Collapse Right Sidebar: Alt + R
-- Dark mode support for comfortable reading in low light.
-- Automatic detection of compatible pages.
+- **Content-Focused Reading**: Switch seamlessly between the standard documentation layout and a distraction-free, full-width content view.
+- **Multiple Reading Themes**: Cycle through comfortable themes with `Alt + D`:
+  - 🌙 **Dark Mode**: Comfortable high-contrast dark palette for low light
+  - 🍃 **Eye-care Green**: Soft green hue designed for long reading sessions
+  - 📜 **Parchment**: Warm retro paper texture
+  - ☀️ **Default**: Original documentation theme
+- **Intelligent Sidebar Management**:
+  - Collapse / restore the left navigation tree (`Alt + L` or `Option + [`)
+  - Collapse / restore the right table of contents (`Alt + R` or `Option + ]`), automatically expanding main content to 100% width
+- **Content Area Width Adjustment**:
+  - Narrow content width (`Alt + Left`)
+  - Widen content width (`Alt + Right`)
+- **Quick Note-Taking**:
+  - Select text on any doc page to immediately bookmark or take notes
+  - Browse and delete saved notes categorized by article directly within the extension popup
+  - One-click export all notes as Markdown (`.md`)
+  - Notes automatically sync across devices via Chrome account sync
+- **Automatic Site Detection**: Automatically detects compatible documentation pages:
+  - 🔴 Red dot badge when visiting supported documentation
+  - 🟢 Green badge when in content-only view
+- **Supported Platforms**:
+  - Alibaba Cloud Documentation (`help.aliyun.com`)
+  - Alibaba Cloud International (`www.alibabacloud.com/help`)
 
-### 更好的文档阅读器
+---
+
+### 更好的文档阅读器 (Better Doc Reader)
 
 ### 特性
-- 提供技术文档的增强阅读体验。
-- 切换全页面和仅内容视图。
-- 快捷笔记功能：
-  - 选择文本保存重要笔记
-  - 通过扩展弹窗访问保存的笔记
-  - 笔记自动在Chrome浏览器间同步（需登录Chrome账号）
-- 快捷键快速导航：
-  - 切换视图：Alt + F
-  - 缩小内容：Alt + Left
-  - 扩大内容：Alt + Right
-  - 切换深色模式：Alt + D
-  - 收起左侧边栏：Alt + L
-  - 收起右侧边栏：Alt + R
-- 深色模式支持，便于在低光环境下阅读。
-- 自动检测兼容页面。
 
+- **专注阅读模式**：一键在官方完整页面与去干扰纯内容模式之间平滑切换。
+- **多款护眼主题**：按 `Alt + D` 循环切换阅读主题：
+  - 🌙 **深色模式**：高对比度暗黑风格，夜间阅读不伤眼
+  - 🍃 **护眼绿**：柔和淡绿底色，缓解长时间阅读疲劳
+  - 📜 **羊皮纸复古**：温暖纸质阅读质感
+  - ☀️ **默认主题**：恢复文档原始配色
+- **智能侧边栏收起/恢复**：
+  - 收起/恢复左侧导航菜单（`Alt + L` 或 Mac 上的 `Option + [`）
+  - 收起/恢复右侧目录大纲（`Alt + R` 或 Mac 上的 `Option + ]`），正文自动平滑伸展占满屏幕
+- **正文宽度精细调整**：
+  - 缩小正文宽度（`Alt + Left`）
+  - 扩大正文宽度（`Alt + Right`）
+- **划词快捷笔记**：
+  - 选中文本自动浮现“保存笔记”按钮，快速记录重点
+  - 点击扩展图标弹窗，按文档页面结构分类查看、折叠与删除笔记
+  - 支持一键导出所有笔记为标准 Markdown（`.md`）文件
+  - 依托 Chrome 账号实现多端浏览器自动云同步
+- **智能页面检测**：
+  - 🔴 访问支持的文档页面时，扩展图标显示红点标记
+  - 🟢 切换为仅内容模式后，扩展图标变为绿色激活状态
+- **全面支持站点**：
+  - 阿里云中国站帮助中心（`help.aliyun.com`）
+  - 阿里云国际站帮助文档（`www.alibabacloud.com/help`）
 
-## Installation Method 1: From Chrome Web Store
+---
 
-1. Visit the Chrome Web Store
-2. Search for "Better Doc Reader"
-3. Click "Add to Chrome"
+## Installation / 安装方式
 
-## Installation Method 2: Manual Installation
+### Method 1: From Chrome Web Store / Chrome 应用商店安装
+1. Visit the Chrome Web Store.
+2. Search for "Better Doc Reader".
+3. Click "Add to Chrome".
 
-1. Download the latest release
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode"
-4. Click "Load unpacked"
-5. Select the extension directory
+### Method 2: Manual Installation / 开发者模式手动安装
+1. Clone this repository or download `better-doc.zip` from Releases and extract it.
+2. Open Chrome and navigate to `chrome://extensions/`.
+3. Enable "Developer mode" in the top right.
+4. Click "Load unpacked" (加载已解压的扩展程序).
+5. Select the repository root directory or the extracted extension directory.
 
-## Usage
+---
 
-1. When visiting a compatible documentation page, the extension icon will show a red dot
-2. Click the extension icon or press Alt+R (shows as Option+R on Mac) to toggle between full page and content-only views
-3. The icon will turn green when in content-only mode
+## Keyboard Shortcuts / 快捷键一览
 
-## Sidebar Management and Shortcut Binding
-- **Collapse Left Sidebar**: Press `Alt + L` to collapse the left sidebar.
-- **Collapse Right Sidebar**: Press `Alt + R` to collapse the right sidebar.
-- **Note**: These shortcuts need to be manually bound by the user. To bind the shortcuts, follow these steps:
-  1. Open Chrome extensions page, navigate to `chrome://extensions/`.
-  2. Click on the "Keyboard shortcuts" link at the top left.
-  3. Find the "Better Doc Reader" extension, locate the actions for collapsing the left and right sidebars.
-  4. Set the desired key combinations (left sidebar is `Alt + L`, right sidebar is `Alt + R`).
+| Action / 功能 | Shortcut (Windows/Linux) | Shortcut (macOS) | Description / 说明 |
+| :--- | :--- | :--- | :--- |
+| **切换仅内容视图** | `Alt + F` | `Option + F` | 或在弹窗中点击“切换仅内容” |
+| **切换阅读主题** | `Alt + D` | `Option + D` | 默认 ➔ 深色 ➔ 护眼绿 ➔ 羊皮纸 |
+| **收起/恢复左侧栏** | `Alt + L` | `Option + L` 或 `Option + [` | 收起/展开左侧导航目录 |
+| **收起/恢复右侧栏** | `Alt + R` | `Option + R` 或 `Option + ]` | 收起/展开右侧大纲并撑满正文 |
+| **缩小正文宽度** | `Alt + Left` | `Option + Left` | 减小正文容器宽度 |
+| **扩大正文宽度** | `Alt + Right` | `Option + Right` | 增加正文容器宽度 |
 
-### 侧边栏管理和快捷键绑定
-- **收起左侧边栏**: 按 `Alt + L` 收起左侧边栏。
-- **收起右侧边栏**: 按 `Alt + R` 收起右侧边栏。
-- **注意**: 这些快捷键需要用户手动绑定。要绑定快捷键，请按照以下步骤操作：
-  1. 打开 Chrome 扩展程序页面，导航到 `chrome://extensions/`。
-  2. 点击左上角的“键盘快捷键”链接。
-  3. 找到“Better Doc Reader”扩展程序，定位到收起左右侧边栏的操作。
-  4. 设置所需的键组合（左侧边栏为 `Alt + L`，右侧边栏为 `Alt + R`）。
+> **提示**：如需自定义以上快捷键，可在 Chrome 浏览器中访问 `chrome://extensions/shortcuts` 进行自由配置。
 
-## Privacy Policy
+---
 
-This extension does not collect or transmit any user data. It only modifies the page layout locally in your browser.
+## Privacy Policy / 隐私说明
+
+This extension runs completely client-side in your browser. It does not collect, track, or transmit any user data to any external server. Saved notes are stored locally and synced only via your official Google Chrome sync account.
+
+本扩展完全在本地浏览器中运行，不采集、不追踪且不向任何第三方服务器上传任何用户数据。保存的笔记仅保存在本地并通过 Google 官方 Chrome 同步服务在您的授权设备间同步。
 
 ## License
 

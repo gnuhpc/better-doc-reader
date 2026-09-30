@@ -15,22 +15,28 @@ const LAYOUT_CONSTANTS = {
   SIDEBAR_WIDTH: 240 // 侧边栏宽度
 };
 
-// 添加窗口大小变化事件监听
+// 添加窗口大小变化事件监听，避免强制刷新页面
+let resizeTimeout;
 window.addEventListener('resize', () => {
-  if (window.__betterAliyunDoc.contentWidth !== null) {
-    console.log('[BetterAliyunDoc] Window resized, resetting content width');
-    // 在用户手动调整窗口大小时重置内容区域宽度
-    location.reload();
+  if (window.__betterAliyunDoc && window.__betterAliyunDoc.contentWidth !== null) {
+    window.clearTimeout(resizeTimeout);
+    resizeTimeout = window.setTimeout(() => {
+      const content = document.querySelector('.aliyun-docs-content');
+      if (content && !window.__betterAliyunDoc.isLayoutAdjustmentInProgress) {
+        const contentWidth = (content.offsetWidth / window.innerWidth) * 100;
+        window.__betterAliyunDoc.contentWidth = Math.round(contentWidth);
+      }
+    }, 200);
   }
 });
 
 // 处理正文区域宽度调整
 function adjustSidebars(mode) {
   const content = document.querySelector('.aliyun-docs-content');
-  const leftSidebar = document.querySelector('.aliyun-docs-menu');
+  const leftSidebar = document.querySelector('.aliyun-docs-menu') || document.querySelector('div[class*="Menu--helpMenuBox"]');
   const rightSidebar = document.querySelector('.aliyun-docs-side');
 
-  if (!content || !leftSidebar || !rightSidebar) return;
+  if (!content) return;
 
   // 标记当前操作是由扩展程序触发
   window.__betterAliyunDoc.isLayoutAdjustmentInProgress = true;
@@ -62,11 +68,11 @@ function adjustSidebars(mode) {
     content.style.width = `${newWidth}%`;
     // Hide sidebars if content is at maximum width
     if (newWidth >= LAYOUT_CONSTANTS.MAX_WIDTH) {
-      leftSidebar.style.display = 'none';
-      rightSidebar.style.display = 'none';
+      if (leftSidebar) leftSidebar.style.display = 'none';
+      if (rightSidebar) rightSidebar.style.display = 'none';
     } else {
-      leftSidebar.style.display = '';
-      rightSidebar.style.display = '';
+      if (leftSidebar) leftSidebar.style.display = '';
+      if (rightSidebar) rightSidebar.style.display = '';
     }
 
     // 重置标记
@@ -215,38 +221,41 @@ function applyContentStyles(content, width) {
   });
 }
 
+// 侧边栏状态控制
+const sidebarState = {
+  leftCollapsed: false,
+  rightCollapsed: false,
+  leftBusy: false,
+  rightBusy: false
+};
+
 // 收起或显示左侧边栏的函数
 function toggleLeftSidebar() {
-  const leftSidebar = document.querySelector('.Menu--helpMenuBox--rvBkNtL');
+  const leftSidebar = document.querySelector('.aliyun-docs-menu') || document.querySelector('div[class*="Menu--helpMenuBox"]');
   const content = document.querySelector('.aliyun-docs-content');
 
-  if (!leftSidebar || !content) return;
+  if (!leftSidebar || !content || sidebarState.leftBusy) return;
+  sidebarState.leftBusy = true;
+  window.setTimeout(() => { sidebarState.leftBusy = false; }, 250);
 
-  // 如果style.display未设置，先获取计算后的display值
-  const currentDisplay = leftSidebar.style.display || window.getComputedStyle(leftSidebar).display;
-  const isHidden = currentDisplay === 'none';
+  leftSidebar.style.transition = 'all 0.2s ease';
+  content.style.transition = 'all 0.2s ease';
 
-  leftSidebar.style.transition = 'all 0.1s ease';
-  content.style.transition = 'all 0.1s ease';
-
-  if (isHidden) {
-    // 显示左侧边栏
-    leftSidebar.style.display = 'block';
-    leftSidebar.style.opacity = '1';
-    leftSidebar.style.transform = 'translateX(0)';
-    leftSidebar.style.zIndex = '1';
-    content.style.marginLeft = '0';
-    content.style.width = 'calc(100% - 240px)';
-    content.style.zIndex = '2';
-  } else {
+  if (!sidebarState.leftCollapsed) {
     // 收起左侧边栏
     leftSidebar.style.opacity = '0';
     leftSidebar.style.transform = 'translateX(-100%)';
     window.setTimeout(() => {
       leftSidebar.style.display = 'none';
-    }, 100); // 等待过渡效果完成后隐藏
-    content.style.marginLeft = '0';
-    content.style.width = '100%';
+    }, 150);
+    sidebarState.leftCollapsed = true;
+  } else {
+    // 恢复左侧边栏
+    leftSidebar.style.display = '';
+    void leftSidebar.offsetHeight; // 强制回流以重置过渡
+    leftSidebar.style.opacity = '1';
+    leftSidebar.style.transform = 'translateX(0)';
+    sidebarState.leftCollapsed = false;
   }
 }
 
@@ -254,165 +263,51 @@ function toggleLeftSidebar() {
 function toggleRightSidebar() {
   const rightSidebar = document.querySelector('.aliyun-docs-side');
   const content = document.querySelector('.aliyun-docs-content');
-  const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper');
+  const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper') || content?.closest('[class*="contentWrapper"]') || content?.parentElement;
 
-  if (!rightSidebar || !content) return;
+  if (!rightSidebar || !content || sidebarState.rightBusy) return;
+  sidebarState.rightBusy = true;
+  window.setTimeout(() => { sidebarState.rightBusy = false; }, 250);
 
-  // 如果style.display未设置，先获取计算后的display值
-  const currentDisplay = rightSidebar.style.display || window.getComputedStyle(rightSidebar).display;
-  const isHidden = currentDisplay === 'none';
+  rightSidebar.style.transition = 'all 0.2s ease';
+  content.style.transition = 'all 0.2s ease';
+  if (contentWrapper) contentWrapper.style.transition = 'all 0.2s ease';
 
-  rightSidebar.style.transition = 'all 0.1s ease';
-  content.style.transition = 'all 0.1s ease';
-  if (contentWrapper) contentWrapper.style.transition = 'all 0.1s ease';
-
-  if (isHidden) {
-    // 显示右侧边栏
-    rightSidebar.style.display = 'block';
-    rightSidebar.style.opacity = '1';
-    rightSidebar.style.transform = 'translateX(0)';
-    rightSidebar.style.zIndex = '1';
-    content.style.marginRight = '0';
-    content.style.width = 'calc(100% - 240px)';
-    content.style.zIndex = '2';
-    if (contentWrapper) {
-      contentWrapper.style.width = '';
-      contentWrapper.style.zIndex = '2';
-    }
-  } else {
+  if (!sidebarState.rightCollapsed) {
     // 收起右侧边栏
     rightSidebar.style.opacity = '0';
     rightSidebar.style.transform = 'translateX(100%)';
     window.setTimeout(() => {
       rightSidebar.style.display = 'none';
-    }, 100); // 等待过渡效果完成后隐藏
-    content.style.marginRight = '0';
+      rightSidebar.style.width = '0px';
+      rightSidebar.style.flex = '0 0 0px';
+    }, 150);
+
+    // 核心：消除右侧占位与分割线，让正文占满右侧空间
+    content.style.maxWidth = 'none';
     content.style.width = '100%';
+    content.style.borderRight = 'none';
     if (contentWrapper) {
       contentWrapper.style.width = '100%';
     }
-  }
-}
-
-// 状态变量
-const sidebarState = {
-  leftSidebarCollapsed: false,
-  rightSidebarCollapsed: false,
-  originalStyles: {
-    left: null,
-    right: null,
-    content: null,
-    contentWrapper: null
-  }
-};
-
-// 保存元素的原始样式
-function saveOriginalStyles(element) {
-  if (!element) return null;
-  const computedStyle = window.getComputedStyle(element);
-  return {
-    display: computedStyle.display,
-    opacity: computedStyle.opacity,
-    transform: computedStyle.transform,
-    zIndex: computedStyle.zIndex,
-    marginLeft: computedStyle.marginLeft,
-    marginRight: computedStyle.marginRight,
-    width: computedStyle.width,
-    maxWidth: computedStyle.maxWidth
-  };
-}
-
-// 收起或恢复左侧边栏的函数
-function collapseLeftSidebar() {
-  const leftSidebar = document.querySelector('.Menu--helpMenuBox--rvBkNtL');
-  const content = document.querySelector('.aliyun-docs-content');
-  if (!leftSidebar || !content) return;
-
-  leftSidebar.style.transition = 'all 0.1s ease';
-  content.style.transition = 'all 0.1s ease';
-
-  if (!sidebarState.leftSidebarCollapsed) {
-    // 保存原始样式
-    sidebarState.originalStyles.left = saveOriginalStyles(leftSidebar);
-    sidebarState.originalStyles.content = saveOriginalStyles(content);
-    // 收起左侧边栏
-    leftSidebar.style.opacity = '0';
-    leftSidebar.style.transform = 'translateX(-100%)';
-    window.setTimeout(() => {
-      leftSidebar.style.display = 'none';
-    }, 100);
-    content.style.marginLeft = '0';
-    content.style.width = '100%';
-    sidebarState.leftSidebarCollapsed = true;
-  } else {
-    // 恢复左侧边栏
-    leftSidebar.style.display = sidebarState.originalStyles.left.display;
-    Object.entries(sidebarState.originalStyles.left).forEach(([prop, value]) => {
-      if (prop !== 'display') { // 跳过display属性，因为我们已经设置过了
-        leftSidebar.style[prop] = value;
-      }
-    });
-
-    Object.entries(sidebarState.originalStyles.content).forEach(([prop, value]) => {
-      content.style[prop] = value;
-    });
-
-    sidebarState.leftSidebarCollapsed = false;
-  }
-}
-
-// 收起或恢复右侧边栏的函数
-function collapseRightSidebar() {
-  const rightSidebar = document.querySelector('.aliyun-docs-side');
-  const content = document.querySelector('.aliyun-docs-content');
-  const contentWrapper = document.querySelector('.aliyun-docs-content-wrapper');
-  if (!rightSidebar || !content) return;
-
-  rightSidebar.style.transition = 'all 0.1s ease';
-  content.style.transition = 'all 0.1s ease';
-  if (contentWrapper) contentWrapper.style.transition = 'all 0.1s ease';
-
-  if (!sidebarState.rightSidebarCollapsed) {
-    // 保存原始样式
-    sidebarState.originalStyles.right = saveOriginalStyles(rightSidebar);
-    sidebarState.originalStyles.content = saveOriginalStyles(content);
-    if (contentWrapper) {
-      sidebarState.originalStyles.contentWrapper = saveOriginalStyles(contentWrapper);
-    }
-    // 收起右侧边栏
-    rightSidebar.style.opacity = '0';
-    rightSidebar.style.transform = 'translateX(100%)';
-    window.setTimeout(() => {
-      rightSidebar.style.display = 'none';
-    }, 100);
-    const mainContentWidth = document.querySelector('.aliyun-docs-content-layout-main')?.offsetWidth || window.innerWidth;
-    content.style.marginRight = '0';
-    content.style.width = `${mainContentWidth}px`;
-    content.style.maxWidth = 'none';
-    if (contentWrapper) {
-      contentWrapper.style.width = `${mainContentWidth}px`;
-      contentWrapper.style.maxWidth = 'none';
-    }
-    sidebarState.rightSidebarCollapsed = true;
+    sidebarState.rightCollapsed = true;
   } else {
     // 恢复右侧边栏
-    rightSidebar.style.display = sidebarState.originalStyles.right.display;
-    Object.entries(sidebarState.originalStyles.right).forEach(([prop, value]) => {
-      if (prop !== 'display') { // 跳过display属性，因为我们已经设置过了
-        rightSidebar.style[prop] = value;
-      }
-    });
+    rightSidebar.style.display = '';
+    rightSidebar.style.width = '';
+    rightSidebar.style.flex = '';
+    void rightSidebar.offsetHeight; // 强制回流
+    rightSidebar.style.opacity = '1';
+    rightSidebar.style.transform = 'translateX(0)';
 
-    Object.entries(sidebarState.originalStyles.content).forEach(([prop, value]) => {
-      content.style[prop] = value;
-    });
-
-    if (contentWrapper && sidebarState.originalStyles.contentWrapper) {
-      Object.entries(sidebarState.originalStyles.contentWrapper).forEach(([prop, value]) => {
-        contentWrapper.style[prop] = value;
-      });
+    // 恢复正文样式
+    content.style.maxWidth = '';
+    content.style.width = '';
+    content.style.borderRight = '';
+    if (contentWrapper) {
+      contentWrapper.style.width = '';
     }
-    sidebarState.rightSidebarCollapsed = false;
+    sidebarState.rightCollapsed = false;
   }
 }
 
@@ -422,6 +317,6 @@ window.BetterAliyunDoc.layout = {
   adjustSidebars: adjustSidebars,
   toggleLeftSidebar: toggleLeftSidebar,
   toggleRightSidebar: toggleRightSidebar,
-  collapseLeftSidebar: collapseLeftSidebar,
-  collapseRightSidebar: collapseRightSidebar
+  collapseLeftSidebar: toggleLeftSidebar,
+  collapseRightSidebar: toggleRightSidebar
 };

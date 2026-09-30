@@ -3,7 +3,7 @@ window.BetterAliyunDoc = window.BetterAliyunDoc || {};
 
 // 初始化函数
 function initializeModules() {
-  if (!window.location.hostname.includes('aliyun.com')) {
+  if (!window.location.hostname.includes('aliyun.com') && !window.location.hostname.includes('alibabacloud.com')) {
     return;
   }
 
@@ -73,13 +73,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else {
       sendResponse({ success: false, error: 'Theme module not loaded' });
     }
-  } else if (message.command === 'toggle-view' && message.source === 'keyboard') {
+  } else if (message.command === 'toggle-view') {
     if (window.BetterAliyunDoc && window.BetterAliyunDoc.content) {
       window.BetterAliyunDoc.content.toggleContent();
-      sendResponse({ success: true });
+      sendResponse({ success: true, isContentOnly: !!window.__betterAliyunDoc?.isContentOnly });
     } else {
       sendResponse({ success: false, error: 'Content module not loaded' });
     }
+  } else if (message.action === 'getPageState') {
+    sendResponse({
+      success: true,
+      isContentOnly: !!window.__betterAliyunDoc?.isContentOnly,
+      contentWidth: window.__betterAliyunDoc?.contentWidth
+    });
   } else if (message.action === 'toggleLeftSidebar') {
     if (window.BetterAliyunDoc && window.BetterAliyunDoc.layout) {
       window.BetterAliyunDoc.layout.toggleLeftSidebar();

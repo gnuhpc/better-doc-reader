@@ -1,5 +1,10 @@
 // 创建一个自执行函数来初始化键盘处理器
 (function() {
+  // 只在顶层窗口运行，避免 iframe 重复处理键盘事件
+  if (window !== window.top) {
+    return;
+  }
+
   console.log('[BetterAliyunDoc] Loading keyboard handler module...');
   // 确保 BetterAliyunDoc 命名空间存在
   window.BetterAliyunDoc = window.BetterAliyunDoc || {};
@@ -17,42 +22,43 @@
 
     // 处理键盘事件的函数
     handleKeyDown: function(e) {
+      // 避免在输入框或文本编辑区中误触快捷键
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
       if (!this.checkDependencies()) {
         return;
       }
-      console.log('[BetterAliyunDoc] handleKeyDown triggered');
-      // 打印所有按键信息，帮助调试
-      console.log('[BetterAliyunDoc] Keydown event details:', {
-        key: e.key,
-        code: e.code,
-        keyCode: e.keyCode,
-        altKey: e.altKey,
-        metaKey: e.metaKey,
-        ctrlKey: e.ctrlKey,
-        type: e.type,
-        target: e.target.tagName
-      });
-
-      console.log('[BetterAliyunDoc] Key pressed:', e.key);
 
       // 检查是否按下 Option/Alt 键
-      if (e.altKey) {
-        // 处理侧边栏快捷键
-        if (e.key === '[' || e.code === 'BracketLeft') {
-          // Option + [：切换左侧边栏
-          console.log('[BetterAliyunDoc] Option + [ pressed');
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        // 处理侧边栏快捷键：支持 Alt + L / Option + [
+        if (e.key === '[' || e.code === 'BracketLeft' || e.key === 'l' || e.key === 'L' || e.code === 'KeyL') {
+          console.log('[BetterAliyunDoc] Option + L / [ pressed');
           e.preventDefault();
           e.stopPropagation();
           window.BetterAliyunDoc.layout.toggleLeftSidebar();
           return false;
-        } else if (e.key === ']' || e.code === 'BracketRight') {
-          // Option + ]：切换右侧边栏
-          console.log('[BetterAliyunDoc] Option + ] pressed');
+        } else if (e.key === ']' || e.code === 'BracketRight' || e.key === 'r' || e.key === 'R' || e.code === 'KeyR') {
+          // 处理侧边栏快捷键：支持 Alt + R / Option + ]
+          console.log('[BetterAliyunDoc] Option + R / ] pressed');
           e.preventDefault();
           e.stopPropagation();
           window.BetterAliyunDoc.layout.toggleRightSidebar();
           return false;
+        } else if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') {
+          // 处理视图切换快捷键：Alt + F
+          console.log('[BetterAliyunDoc] Option + F pressed');
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.BetterAliyunDoc.content) {
+            window.BetterAliyunDoc.content.toggleContent();
+          }
+          return false;
         }
+
         // 处理内容区域宽度调整快捷键
         if (e.key === 'ArrowLeft' || e.code === 'ArrowLeft') {
           // Option + 左箭头：缩小正文区域
@@ -73,16 +79,10 @@
     }
   };
 
-  // 立即添加键盘事件监听器，不等待 DOMContentLoaded
+  // 添加单个键盘事件监听器，使用捕获阶段确保优先拦截
   console.log('[BetterAliyunDoc] Initializing keyboard handler');
-  document.addEventListener('keydown', window.BetterAliyunDoc.keyboard.handleKeyDown.bind(window.BetterAliyunDoc.keyboard), true);
-
-  // 确保在 DOMContentLoaded 后也添加事件监听器（以防第一次添加时文档还未准备好）
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('[BetterAliyunDoc] Re-adding keyboard event listener after DOMContentLoaded');
-    // 先移除之前的监听器，避免重复
-    document.removeEventListener('keydown', window.BetterAliyunDoc.keyboard.handleKeyDown, true);
-    document.addEventListener('keydown', window.BetterAliyunDoc.keyboard.handleKeyDown.bind(window.BetterAliyunDoc.keyboard), true);
-    console.log('[BetterAliyunDoc] Keyboard handler is ready');
-  });
+  document.addEventListener('keydown', (e) => {
+    window.BetterAliyunDoc?.keyboard?.handleKeyDown(e);
+  }, true);
+  console.log('[BetterAliyunDoc] Keyboard handler is ready');
 })();

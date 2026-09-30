@@ -9,28 +9,38 @@
       font-family: system-ui, -apple-system, sans-serif;
     }
     .header {
-      text-align: center;
-      margin-bottom: 15px;
-      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
     }
-    .export-button {
+    .action-button {
+      flex: 1;
       background: #f0f5ff;
       color: #1890ff;
       border: 1px solid #d6e4ff;
-      padding: 4px 12px;
-      border-radius: 3px;
+      padding: 6px 10px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      gap: 5px;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
-    .export-button:hover {
+    .action-button:hover {
       background: #e6f4ff;
       border-color: #1890ff;
     }
-    .export-button svg {
+    .action-button.active {
+      background: #52c41a;
+      border-color: #52c41a;
+      color: #fff;
+    }
+    .action-button svg {
       width: 14px;
       height: 14px;
       fill: currentColor;
@@ -157,8 +167,14 @@
 </head>
 <body>
   <div class="header">
-    <button class="export-button" id="export-notes">
-      <svg viewBox="0 0 24 24" width="14" height="14">
+    <button class="action-button view-button" id="toggle-view-btn" title="快捷键: Alt + F">
+      <svg viewBox="0 0 24 24">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+      </svg>
+      <span id="view-mode-text">切换仅内容</span>
+    </button>
+    <button class="action-button export-button" id="export-notes">
+      <svg viewBox="0 0 24 24">
         <path d="M13 5v6h3l-4 4-4-4h3V5h2M6 18h12v2H6v-2z"/>
       </svg>
       导出笔记
@@ -169,7 +185,7 @@
     <div id="notes-container">
       <ul class="notes-list" id="notes-list"></ul>
       <div class="empty-notes" id="empty-notes" style="display: none;">
-        暂无笔记。选中文字并点击 "划重点" 添加笔记。
+        暂无笔记。选中文字并点击 "保存笔记" 添加笔记。
       </div>
     </div>
   </div>
