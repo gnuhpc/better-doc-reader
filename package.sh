@@ -15,7 +15,13 @@ cp README.md privacy_policy.md "$temp_dir/"
 cd "$temp_dir"
 
 # 创建 ZIP 文件（保存在当前项目根目录下）
+rm -f "$SCRIPT_DIR/better-doc.zip"
 zip -r "$SCRIPT_DIR/better-doc.zip" ./*
+
+# 同步解压目录 better-doc/ (便于 Chrome 开发者模式直接加载解压目录)
+rm -rf "$SCRIPT_DIR/better-doc"
+mkdir -p "$SCRIPT_DIR/better-doc"
+cp -r ./* "$SCRIPT_DIR/better-doc/"
 
 # 返回原目录
 cd - > /dev/null
@@ -24,4 +30,5 @@ cd - > /dev/null
 rm -rf "$temp_dir"
 
 echo "Package created: $SCRIPT_DIR/better-doc.zip"
+echo "Unpacked directory updated: $SCRIPT_DIR/better-doc"
 ls -lh "$SCRIPT_DIR/better-doc.zip"

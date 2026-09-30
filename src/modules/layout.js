@@ -80,24 +80,6 @@ function adjustSidebars(mode) {
   });
 }
 
-// 应用容器样式
-function applyContainerStyles(container) {
-  const styles = {
-    'display': 'flex',
-    'justify-content': 'space-between',
-    'align-items': 'flex-start',
-    'width': '100%',
-    'position': 'relative',
-    'overflow': 'visible',
-    'gap': '0',
-    'padding': '0'
-  };
-
-  Object.entries(styles).forEach(([prop, value]) => {
-    container.style.setProperty(prop, value, 'important');
-  });
-}
-
 // 应用过渡效果
 function applyTransitionEffects(elements) {
   elements.filter(Boolean).forEach((el) => {

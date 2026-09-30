@@ -21,7 +21,7 @@ window.BetterAliyunDoc.init = {
   },
 
   _ensureModulesLoaded: function() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let attempts = 0;
       const MAX_ATTEMPTS = 50; // 5 seconds maximum
 

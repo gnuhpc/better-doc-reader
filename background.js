@@ -47,7 +47,7 @@ chrome.commands.onCommand.addListener(async (command) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.type === 'pageCheckResult') {
     if (message.isExtractable) {
       extractablePages.add(sender.tab.id);
@@ -89,7 +89,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // 不再需要图标点击处理器，因为现在使用popup
 
 // 当标签页更新时，重新检查页面
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'complete') {
     // 移除注入状态
     injectedTabs.delete(tabId);

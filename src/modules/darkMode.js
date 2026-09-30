@@ -138,11 +138,18 @@ function applyDarkModeToMenuSearchResults() {
 // 应用样式到通知区域
 function applyDarkModeToNoticeDivs() {
   const currentStyles = getCurrentThemeStyles();
-  const noticeDivs = document.querySelectorAll('div[type="notice"]');
+  const noticeDivs = document.querySelectorAll('div[type="notice"], div[type="warning"], div[type="tip"]');
   noticeDivs.forEach((div) => {
     div.style.backgroundColor = currentStyles.background;
     div.style.color = currentStyles.text;
     div.style.borderColor = currentStyles.border;
+    const childElements = div.querySelectorAll('*');
+    childElements.forEach((child) => {
+      if (child.tagName.toLowerCase() !== 'a') {
+        child.style.setProperty('color', currentStyles.text, 'important');
+      }
+      child.style.setProperty('background-color', currentStyles.background, 'important');
+    });
   });
 }
 
@@ -232,6 +239,9 @@ function applyDarkModeToSpecificElements() {
       child.style.setProperty('background-color', currentStyles.background, 'important');
     });
   });
+
+  // 应用样式到 notice / warning / tip 的 div
+  applyDarkModeToNoticeDivs();
 
   // 隐藏 header 和 footer
   const header = document.querySelector('header');
