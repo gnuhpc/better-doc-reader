@@ -8,7 +8,7 @@ gnuhpc
 
 ## Features
 
-- **Content-Focused Reading**: Switch seamlessly between the standard documentation layout and a distraction-free, full-width content view.
+- **Content-Focused Reading (`Alt + F`)**: Switch seamlessly between the standard documentation layout and a distraction-free, full-width content view. In content-only mode, hover your mouse near the left edge to reveal the product menu drawer, or near the right edge to slide out the in-page outline drawer for smooth jump navigation.
 - **Multiple Reading Themes**: Cycle through comfortable themes with `Alt + D`:
   - 🌙 **Dark Mode**: Comfortable high-contrast dark palette for low light
   - 🍃 **Eye-care Green**: Soft green hue designed for long reading sessions
@@ -38,7 +38,7 @@ gnuhpc
 
 ### 特性
 
-- **专注阅读模式**：一键在官方完整页面与去干扰纯内容模式之间平滑切换。
+- **专注阅读模式（`Alt + F`）**：一键在官方完整页面与去干扰纯内容模式之间平滑切换。在纯享模式下，鼠标轻移至屏幕左侧边缘即可呼出浮动产品目录抽屉，移动至右侧边缘即可呼出页内跳转大纲抽屉，点击小节标题可平滑定位跳转。
 - **多款护眼主题**：按 `Alt + D` 循环切换阅读主题：
   - 🌙 **深色模式**：高对比度暗黑风格，夜间阅读不伤眼
   - 🍃 **护眼绿**：柔和淡绿底色，缓解长时间阅读疲劳

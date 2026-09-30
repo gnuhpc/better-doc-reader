@@ -372,6 +372,21 @@ function applyThemeStyles(theme) {
       background-color: ${currentStyles.background} !important;
       color: ${currentStyles.text} !important;
     }
+    .bad-drawer,
+    .bad-drawer-header,
+    .bad-drawer-body,
+    .bad-drawer-handle {
+      background-color: ${currentStyles.background} !important;
+      color: ${currentStyles.text} !important;
+      border-color: ${currentStyles.border || '#444'} !important;
+    }
+    .bad-outline-item {
+      color: ${currentStyles.text} !important;
+    }
+    .bad-outline-item:hover {
+      background-color: ${currentStyles.table ? currentStyles.table.altRow : 'rgba(24, 144, 255, 0.1)'} !important;
+      color: ${currentStyles.link} !important;
+    }
   `;
 
   applyDarkModeToSpecificElements();
